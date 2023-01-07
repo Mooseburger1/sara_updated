@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+option go_package = "backend/grpc/proto/photos";
+
+
+service GooglePhotoService {
+    rpc ListAlbums(AlbumListRequest) returns (AlbumsInfo);
+    rpc GetAlbumMedia(FromAlbumRequest) returns (MediaInfo);
+}
+
+// List all available albums for a given account
+message AlbumListRequest {
+    int32 page_size = 1;
+    string page_token = 2;
+}
+
+// Gets media from a specific album
+message FromAlbumRequest {
+    string album_id = 1;
+    string page_size = 2;
+    int32 page_token = 3;
+}
+
+message AlbumInfo {
+    string id = 1;
+    string title = 2;
+    string product_url = 3;
+    int32 media_items_count = 4;
+    string cover_photo_url = 5;
+}
+
+message AlbumsInfo {
+    repeated AlbumInfo albums_info = 1;
+    string next_page_token = 2;
+}
+
+message MediaInfo {
+    repeated Media media = 1;
+    string page_token = 2;
+}
+
+
+message Media {
+    string id = 1;
+    string url = 2;
+    string mime_type = 4;
+    
+}
