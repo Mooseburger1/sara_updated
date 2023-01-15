@@ -24,7 +24,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Request to get a list all available albums for a given account
+// List all available albums for a given account
 type AlbumListRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+option go_package = "backend/grpc/proto/protoauth";
+
+import "google/protobuf/timestamp.proto";
+
+
+
+message OauthConfigInfo{
+    GoogleTokenInfo token_info = 1;
+    GoogleAppCredentials app_credentials = 2;
+    GoogleScoping app_scopes = 3;
+    URL redirect_url = 4;
+}
+
+// Represents the token returned by Google servers
+// during a 3-leg OAuth2 flow
+message GoogleTokenInfo {
+    string access_token = 1;
+    string refresh_token = 2;
+    string token_type = 3;
+    google.protobuf.Timestamp expiry = 4;
+}
+
+// Credentials verifying the app with Google
+// servers in a 3-leg OAuth2 flow
+message GoogleAppCredentials {
+    string client_id = 1;
+    string client_secret = 2;
+}
+
+// Scopes granting the application capabilities
+// to interact with Google services on behalf
+// of the user
+message GoogleScoping {
+    repeated string scopes = 1;
+}
+
+// URL conveys the redirect url OAuth servers need
+// to complete an OAuth2.0 transaction. This is the url
+// the application is redirected to after authorization
+message URL {
+    string redirect_url = 1;
+}
