@@ -8,7 +8,7 @@ service GooglePhotoService {
     rpc GetAlbumMedia(FromAlbumRequest) returns (MediaInfo);
 }
 
-// Request to get a list all available albums for a given account
+// List all available albums for a given account
 message AlbumListRequest {
     int32 page_size = 1;
     string page_token = 2;
