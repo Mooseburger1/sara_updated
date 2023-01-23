@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "client.proto";
+
 option go_package = "backend/grpc/proto/photos";
 
 
@@ -12,6 +14,7 @@ service GooglePhotoService {
 message AlbumListRequest {
     int32 page_size = 1;
     string page_token = 2;
+    ClientInfo client_info = 3;
 }
 
 // Gets media from a specific album
