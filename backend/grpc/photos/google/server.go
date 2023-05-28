@@ -3,12 +3,10 @@ package photo_server
 import (
 	"log"
 	"net"
-	"net/http"
 	"os"
 
-	proto_photo "github.com/Mooseburger1/sara_updated/backend/grpc/proto/photos"
-	"github.com/Mooseburger1/sara_updated/backend/grpc/proto/protoauth"
 	google_oauth "github.com/Mooseburger1/sara_updated/backend/common"
+	proto_photo "github.com/Mooseburger1/sara_updated/backend/grpc/proto/photos"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -16,26 +14,37 @@ import (
 
 const PORT = "GOOGLE_PHOTO_SERVER_PORT"
 
-type ClientFunc func(*protoauth.OauthConfigInfo) (*http.Client, error)
-
 type Opts struct {
-	clientCreator ClientFunc
+	clientCreator google_oauth.ClientFunc
+	listener      net.Listener
 }
 
+type OptFunc func(*Opts)
+
 type photosServer struct {
-	Server  *grpc.Server
-	logger  *log.Logger
+	Server *grpc.Server
+	logger *log.Logger
 	Opts
 }
 
-func DefaultOpts() Opts {
-	return Opts {
+func defaultOpts() Opts {
+	return Opts{
 		clientCreator: google_oauth.CreateClient,
+		listener:      createDefaultListener(),
 	}
 }
 
-func NewPhotosServer() *photosServer {
-	ps := photosServer{}
+func NewPhotosServer(opts ...OptFunc) *photosServer {
+	o := defaultOpts()
+
+	for _, fn := range opts {
+		fn(&o)
+	}
+
+	ps := photosServer{
+		Opts: o,
+	}
+
 	ps.initServer()
 	return &ps
 }
@@ -52,16 +61,21 @@ func (ps *photosServer) initServer() {
 
 func (s *photosServer) StartServer() {
 	reflection.Register(s.Server)
-	l, err := net.Listen("tcp", os.Getenv("GOOGLE_PHOTO_SERVER_PORT"))
-	if err != nil {
-		s.logger.Fatal(err)
-		os.Exit(1)
-	}
-	s.logger.Printf("Google photos grpc listening on %s", os.Getenv("GOOGLE_PHOTO_SERVER_PORT"))
-	s.Server.Serve(l)
+
+	s.logger.Print("Google photos grpc listening on port 4000")
+	s.Server.Serve(s.Opts.listener)
 
 }
 
 func (s *photosServer) ShutdownServer() {
 	s.Server.GracefulStop()
+}
+
+func createDefaultListener() net.Listener {
+	l, err := net.Listen("tcp", ":4000")
+	if err != nil {
+		panic(err)
+	}
+
+	return l
 }

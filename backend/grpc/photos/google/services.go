@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"backend/grpc/proto/photos"
+	"github.com/Mooseburger1/sara_updated/backend/grpc/proto/photos"
 )
 
 // GphotoStub is the implementation of the
@@ -35,8 +35,8 @@ func (g *GphotoStub) ListAlbums(ctx context.Context,
 // FromAlbumRequest proto and returns a PhotosInfo proto. Internally
 // it makes an Oauth2 authorized rest request to the Google Photos API
 // server for listing photos from a specific album
-func (g *GphotoStub) ListPhotosFromAlbum(ctx context.Context,
-	rpc *photos.FromAlbumRequest) (*photos.PhotosInfo, error) {
+func (g *GphotoStub) GetAlbumMedia(ctx context.Context,
+	rpc *photos.FromAlbumRequest) (*photos.MediaInfo, error) {
 
 	//TODO
 	return nil, nil
