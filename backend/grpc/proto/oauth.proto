@@ -40,5 +40,5 @@ message GoogleScoping {
 // to complete an OAuth2.0 transaction. This is the url
 // the application is redirected to after authorization
 message URL {
-    string redirect_url = 1;
+    string url = 1;
 }
