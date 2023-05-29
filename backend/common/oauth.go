@@ -6,7 +6,7 @@ import (
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"github.com/Mooseburger1/sara_updated/backend/grpc/proto/protoauth"
+	"sara_updated/backend/grpc/proto/protoauth"
 )
 
 type ClientFunc func(*protoauth.OauthConfigInfo) (*http.Client, error)

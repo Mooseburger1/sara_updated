@@ -5,8 +5,8 @@ import (
 	"net"
 	"os"
 
-	google_oauth "github.com/Mooseburger1/sara_updated/backend/common"
-	proto_photo "github.com/Mooseburger1/sara_updated/backend/grpc/proto/photos"
+	google_oauth "sara_updated/backend/common"
+	proto_photo "sara_updated/backend/grpc/proto/photos"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

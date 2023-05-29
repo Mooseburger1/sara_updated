@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/Mooseburger1/sara_updated/backend/common"
-	photo_server "github.com/Mooseburger1/sara_updated/backend/grpc/photos/google"
+	"sara_updated/backend/common"
+	photo_server "sara_updated/backend/grpc/photos/google"
 )
 
 func startServers(servers ...common.SaraServer) {

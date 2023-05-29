@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/Mooseburger1/sara_updated/backend/grpc/proto/photos"
+	"sara_updated/backend/grpc/proto/photos"
 )
 
 // GphotoStub is the implementation of the
