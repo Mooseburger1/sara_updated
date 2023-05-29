@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "backend/grpc/proto/protoauth";
+option go_package = "sara_updated/backend/grpc/proto/protoauth";
 
 import "google/protobuf/timestamp.proto";
 

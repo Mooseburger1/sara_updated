@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "oauth.proto";
+
 option go_package = "sara_updated/backend/grpc/proto/photos";
 
 
