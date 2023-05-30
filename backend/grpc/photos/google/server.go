@@ -12,28 +12,47 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-const PORT = "GOOGLE_PHOTO_SERVER_PORT"
-
-type Opts struct {
-	clientCreator google_oauth.ClientFunc
-	listener      net.Listener
-}
-
-type OptFunc func(*Opts)
-
+// photoServer maintains the functionality and state of the grpc server for the
+// photo service gRPC server/endpoint
 type photosServer struct {
 	Server *grpc.Server
 	logger *log.Logger
 	Opts
 }
 
+// Opts represents the different options, settings and configurations the photos gRPC server can be
+// configured with
+type Opts struct {
+	clientCreator google_oauth.ClientFunc
+	listener      net.Listener
+	server_api    proto_photo.GooglePhotoServiceServer
+}
+
+// An OptFunc is a function meant to modify an existing Opts struct with new configurations
+// prior to starting a photos gRPC server. It receives a pointer to an Opt struct and sets
+// one or more fields of the struct. The modifications are in place, thus an OptFunc should
+// not return anything.
+type OptFunc func(*Opts)
+
 func defaultOpts() Opts {
 	return Opts{
 		clientCreator: google_oauth.CreateClient,
 		listener:      createDefaultListener(),
+		server_api:    NewGPhotosApiStub(),
 	}
 }
 
+func createDefaultListener() net.Listener {
+	l, err := net.Listen("tcp", ":4000")
+	if err != nil {
+		panic(err)
+	}
+
+	return l
+}
+
+// NewPhotosServer takes in 0 or more OptFuncs to instantiate and configure the photos
+// gRPC server. If no OptFuncs are supplied, the defaults will be utilized.
 func NewPhotosServer(opts ...OptFunc) *photosServer {
 	o := defaultOpts()
 
@@ -53,9 +72,8 @@ func (ps *photosServer) initServer() {
 	logger := log.New(os.Stdout, "photos-rpc-server", log.LstdFlags)
 	ps.logger = logger
 	grpcServer := grpc.NewServer()
-	photoServer := NewGphotoStub(logger)
 
-	proto_photo.RegisterGooglePhotoServiceServer(grpcServer, photoServer)
+	proto_photo.RegisterGooglePhotoServiceServer(grpcServer, ps.Opts.server_api)
 	ps.Server = grpcServer
 }
 
@@ -69,13 +87,4 @@ func (s *photosServer) StartServer() {
 
 func (s *photosServer) ShutdownServer() {
 	s.Server.GracefulStop()
-}
-
-func createDefaultListener() net.Listener {
-	l, err := net.Listen("tcp", ":4000")
-	if err != nil {
-		panic(err)
-	}
-
-	return l
 }

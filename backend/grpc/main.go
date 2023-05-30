@@ -23,4 +23,6 @@ func main() {
 	// Start Servers
 	logger.Print("Starting RPC servers")
 	startServers(photoServer)
+
+	select {}
 }
