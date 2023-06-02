@@ -12,6 +12,13 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 )
 
+var (
+	DEFAULT_LIST_REQUEST   = &photos.AlbumListRequest{}
+	DEFAULT_MEDIA_REQUEST  = &photos.FromAlbumRequest{}
+	DEFAULT_LIST_RESPONSE  = &photos.AlbumsInfo{}
+	DEFAULT_MEDIA_RESPONSE = &photos.MediaInfo{}
+)
+
 type mockServer struct {
 	listResponse  *photos.AlbumsInfo
 	albumResponse *photos.MediaInfo
@@ -27,23 +34,11 @@ func (m *mockServer) GetAlbumMedia(ctx context.Context,
 	return m.albumResponse, nil
 }
 
-func listAlbumsApiCreator(lr *photos.AlbumsInfo) *mockServer {
-	return apiServiceCreator(lr, &photos.MediaInfo{})
-}
-
-func getAlbumApiCreator(ar *photos.MediaInfo) *mockServer {
-	return apiServiceCreator(&photos.AlbumsInfo{}, ar)
-}
-
-func apiServiceCreator(lr *photos.AlbumsInfo, ar *photos.MediaInfo) *mockServer {
-	return &mockServer{
+func apiServiceOptFunc(lr *photos.AlbumsInfo, ar *photos.MediaInfo) OptFunc {
+	apiServer := &mockServer{
 		listResponse:  lr,
 		albumResponse: ar,
 	}
-}
-
-func apiServiceOptFunc(lr *photos.AlbumsInfo) OptFunc {
-	apiServer := listAlbumsApiCreator(lr)
 	return func(options *Opts) {
 		options.server_api = apiServer
 	}
@@ -55,7 +50,7 @@ func opFuncListener(lis *bufconn.Listener) OptFunc {
 	}
 }
 
-func prepare(ctx context.Context, options []OptFunc) (photos.GooglePhotoServiceClient, func()) {
+func prepare(ctx context.Context, options []OptFunc) (*photos.GooglePhotoServiceClient, func()) {
 	buffer := 101024 * 1024
 	listener := bufconn.Listen(buffer)
 
@@ -82,26 +77,42 @@ func prepare(ctx context.Context, options []OptFunc) (photos.GooglePhotoServiceC
 
 	client := photos.NewGooglePhotoServiceClient(conn)
 
-	return client, closer
+	return &client, closer
 }
+
+type expectation struct {
+	value string
+	err   error
+}
+
+type testFunc func(context.Context, *photos.GooglePhotoServiceClient) (string, error)
 
 func TestNewPhotosServerListAlbums(t *testing.T) {
 
-	type expectation struct {
-		value string
-		err   error
-	}
-
 	tests := map[string]struct {
 		opts     []OptFunc
-		in       *photos.AlbumListRequest
+		test     testFunc
 		expected expectation
 	}{
-		"Success": {
-			opts: []OptFunc{apiServiceOptFunc(&photos.AlbumsInfo{NextPageToken: "hello"})},
-			in:   &photos.AlbumListRequest{},
+		"listAlbums": {
+			opts: []OptFunc{apiServiceOptFunc(&photos.AlbumsInfo{NextPageToken: "hello"}, DEFAULT_MEDIA_RESPONSE)},
+			test: func(ctx context.Context, c *photos.GooglePhotoServiceClient) (string, error) {
+				resp, err := (*c).ListAlbums(ctx, &photos.AlbumListRequest{})
+				return resp.NextPageToken, err
+			},
 			expected: expectation{
 				value: "hello",
+				err:   nil,
+			},
+		},
+		"getMedia": {
+			opts: []OptFunc{apiServiceOptFunc(DEFAULT_LIST_RESPONSE, &photos.MediaInfo{PageToken: "world"})},
+			test: func(ctx context.Context, c *photos.GooglePhotoServiceClient) (string, error) {
+				resp, err := (*c).GetAlbumMedia(ctx, &photos.FromAlbumRequest{})
+				return resp.PageToken, err
+			},
+			expected: expectation{
+				value: "world",
 				err:   nil,
 			},
 		},
@@ -114,7 +125,7 @@ func TestNewPhotosServerListAlbums(t *testing.T) {
 			client, closer := prepare(ctx, tt.opts)
 			defer closer()
 
-			req, err := client.ListAlbums(ctx, tt.in)
+			val, err := tt.test(ctx, client)
 
 			if err != nil {
 				if tt.expected.err.Error() != err.Error() {
@@ -123,8 +134,8 @@ func TestNewPhotosServerListAlbums(t *testing.T) {
 				return
 			}
 
-			if tt.expected.value != req.NextPageToken {
-				t.Errorf("\nTest %s\nExpected: %q\nActual: %q\n", scenario, tt.expected.value, req.NextPageToken)
+			if tt.expected.value != val {
+				t.Errorf("\nTest %s\nExpected: %q\nActual: %q\n", scenario, tt.expected.value, val)
 			}
 
 		})
