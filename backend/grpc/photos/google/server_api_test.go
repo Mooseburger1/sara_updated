@@ -2,6 +2,7 @@ package photo_server
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sara_updated/backend/common"
@@ -9,6 +10,8 @@ import (
 	"sara_updated/backend/grpc/proto/protoauth"
 	"strings"
 	"testing"
+
+	"google.golang.org/protobuf/proto"
 )
 
 type reqChecksFunc func(req *http.Request)
@@ -35,8 +38,14 @@ func TestListAlbums(t *testing.T) {
 		checks   reqChecksFunc
 	}{
 		"NoQueryParams": {
-			in:       &photos.AlbumListRequest{},
-			expected: &photos.AlbumsInfo{AlbumsInfo: []*photos.AlbumInfo{{Id: "123"}}},
+			in: &photos.AlbumListRequest{},
+			expected: &photos.AlbumsInfo{Albums: []*photos.AlbumInfo{{
+				Id:                    "foo",
+				Title:                 "bar",
+				ProductUrl:            "baz",
+				MediaItemsCount:       200,
+				CoverPhotoBaseUrl:     "someUrl",
+				CoverPhotoMediaItemId: "someOtherUrl"}}},
 			resp: &http.Response{
 				StatusCode: http.StatusOK,
 				Body: ioutil.NopCloser(strings.NewReader(`{
@@ -48,15 +57,38 @@ func TestListAlbums(t *testing.T) {
 						"mediaItemsCount": "200",
 						"coverPhotoBaseUrl": "someUrl",
 						"coverPhotoMediaItemId": "someOtherUrl"
-					  },
-					  {
-						"id": "someId",
-						"productUrl": "someProductUrl"
 					  }
 					]
 				  }`)),
 			},
-			checks: nil},
+			checks: func(req *http.Request) {
+				host := req.Host
+				path := req.URL.Path
+				url := fmt.Sprintf("https://%s%s", host, path)
+				if url != ALBUMS_ENDPOINT {
+					t.Errorf("Expected URL: %q\nActual: %q\n", ALBUMS_ENDPOINT, url)
+				}
+
+				if req.Method != "GET" {
+					t.Errorf("Expected Verb: %q\nActual: %q\n", "GET", req.Method)
+				}
+			}},
+		"QueryParams": {
+			in:       &photos.AlbumListRequest{PageSize: 10, PageToken: "Foo"},
+			expected: &photos.AlbumsInfo{},
+			resp: &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       ioutil.NopCloser(strings.NewReader(`{}`)),
+			},
+			checks: func(req *http.Request) {
+				if pageSize := req.URL.Query().Get("pageSize"); pageSize != "10" {
+					t.Errorf("Expected pageSize: %q\nActual: %q\n", "10", pageSize)
+				}
+
+				if pageToken := req.URL.Query().Get("pageToken"); pageToken != "Foo" {
+					t.Errorf("Expected pageToken: %q\nActual: %q\n", "Foo", pageToken)
+				}
+			}},
 	}
 
 	for scenario, tt := range tests {
@@ -69,6 +101,8 @@ func TestListAlbums(t *testing.T) {
 			t.Errorf("Got error of %v", err)
 		}
 
-		t.Errorf("\nTest %s\nExpected: %q\nActual: %q\n", scenario, tt.expected, value)
+		if !proto.Equal(value, tt.expected) {
+			t.Errorf("\nTest %s\nExpected: %q\nActual: %q\n", scenario, tt.expected, value)
+		}
 	}
 }
