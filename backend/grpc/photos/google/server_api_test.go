@@ -69,8 +69,6 @@ func TestListAlbums(t *testing.T) {
 			t.Errorf("Got error of %v", err)
 		}
 
-		if value.AlbumsInfo[0].Id != tt.expected.AlbumsInfo[0].Id {
-			t.Errorf("\nTest %s\nExpected: %q\nActual: %q\n", scenario, tt.expected, value)
-		}
+		t.Errorf("\nTest %s\nExpected: %q\nActual: %q\n", scenario, tt.expected, value)
 	}
 }
