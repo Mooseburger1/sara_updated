@@ -3,6 +3,7 @@ package photo_server
 import (
 	"context"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -11,7 +12,7 @@ import (
 	"sara_updated/backend/common"
 	"sara_updated/backend/grpc/proto/photos"
 
-	"github.com/golang/protobuf/jsonpb"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 const (
@@ -72,8 +73,14 @@ func (g *GPhotosAPI) ListAlbums(ctx context.Context,
 	}
 
 	respRpc := &photos.AlbumsInfo{}
-	err = jsonpb.Unmarshal(resp.Body, respRpc)
-
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	err = protojson.Unmarshal(bytes, respRpc)
+	if err != nil {
+		panic(err)
+	}
 	return respRpc, nil
 }
 
