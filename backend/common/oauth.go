@@ -4,11 +4,14 @@ import (
 	"context"
 	"net/http"
 
+	"sara_updated/backend/grpc/proto/protoauth"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"sara_updated/backend/grpc/proto/protoauth"
 )
 
+// ClientFunc takes in an OauthConfigInfo proto and returns an *http.Client for
+// making REST requests to Google API services using Oauth verified credentials.
 type ClientFunc func(*protoauth.OauthConfigInfo) (*http.Client, error)
 
 // CreateClient is a function utilized
