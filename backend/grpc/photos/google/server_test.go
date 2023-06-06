@@ -50,7 +50,7 @@ func opFuncListener(lis *bufconn.Listener) OptFunc {
 	}
 }
 
-func prepare(ctx context.Context, options []OptFunc) (*photos.GooglePhotoServiceClient, func()) {
+func prepareTest(ctx context.Context, options []OptFunc) (*photos.GooglePhotoServiceClient, func()) {
 	buffer := 101024 * 1024
 	listener := bufconn.Listen(buffer)
 
@@ -122,7 +122,7 @@ func TestNewPhotosServerListAlbums(t *testing.T) {
 		t.Run(scenario, func(t *testing.T) {
 
 			ctx := context.Background()
-			client, closer := prepare(ctx, tt.opts)
+			client, closer := prepareTest(ctx, tt.opts)
 			defer closer()
 
 			val, err := tt.test(ctx, client)
