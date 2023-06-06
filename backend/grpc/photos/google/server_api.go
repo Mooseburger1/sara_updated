@@ -73,7 +73,9 @@ func (g *GPhotosAPI) ListAlbums(ctx context.Context,
 
 	respRpc := &photos.AlbumsInfo{}
 	err = jsonpb.Unmarshal(resp.Body, respRpc)
-
+	if err != nil {
+		panic(err)
+	}
 	return respRpc, nil
 }
 
