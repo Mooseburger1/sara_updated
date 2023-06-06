@@ -36,9 +36,8 @@ type OptFunc func(*Opts)
 
 func defaultOpts() Opts {
 	return Opts{
-		clientCreator: google_oauth.CreateClient,
-		listener:      createDefaultListener(),
-		server_api:    NewGPhotosApiStub(),
+		listener:   createDefaultListener(),
+		server_api: NewGPhotosApiStub(google_oauth.CreateClient),
 	}
 }
 

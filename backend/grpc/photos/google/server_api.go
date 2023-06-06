@@ -3,6 +3,7 @@ package photo_server
 import (
 	"context"
 
+	"sara_updated/backend/common"
 	"sara_updated/backend/grpc/proto/photos"
 )
 
@@ -11,11 +12,14 @@ import (
 // * ListAlbums service
 // * GetAlbumMedia service
 type GPhotosAPI struct {
+	clientCreator common.ClientFunc
 }
 
 // Builder for instantiating a GPhotosAPI
-func NewGPhotosApiStub() *GPhotosAPI {
-	return &GPhotosAPI{}
+func NewGPhotosApiStub(cf common.ClientFunc) *GPhotosAPI {
+	return &GPhotosAPI{
+		clientCreator: cf,
+	}
 }
 
 // ListAlbums is a RPC service endpoint. It receives an AlbumListRequest
