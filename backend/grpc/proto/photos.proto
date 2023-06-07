@@ -2,26 +2,53 @@ syntax = "proto3";
 
 option go_package = "sara_updated/backend/grpc/proto/photos";
 
-
-service GooglePhotoService {
+// Service that exposes RPCs for insepcting and retrieving media (photos & videos)
+// from various media hosting services such as Google Photos, Dropbox, and S3.
+service PhotoService {
     rpc ListAlbums(AlbumListRequest) returns (AlbumsInfo);
-    rpc GetAlbumMedia(FromAlbumRequest) returns (MediaInfo);
+    rpc GetAlbumMedia(GetMediaRequest) returns (MediaInfo);
 }
 
-// Request to get a list all available albums for a given account
+// Request to get a list of all available albums for a given account. For platforms
+// like Google Photos, it would be actual albums a user has created. For media agnostic
+// services like Dropbox and AWS S3, this may be folders or directories a user has
+// created specifically to hold photos and media.
 message AlbumListRequest {
+    GooglePhotosAlbumsRequest google_request = 1;
+}
+
+// Conforms to the REST API request to list all albums for the authenticated user.
+// See https://developers.google.com/photos/library/reference/rest/v1/albums/list
+message GooglePhotosAlbumsRequest {
     int32 page_size = 1;
     string page_token = 2;
 }
 
-// Gets media from a specific album
-message FromAlbumRequest {
+// Gets media from a specific album for a specific photo host {i.e. google photos, dropbox, s3}
+message GetMediaRequest {
+    oneof photos_platform {
+        GooglePhotosMediaRequest google_request = 1;
+    }
+}
+
+// Conforms to the REST API request to list all media associated with a particular Google
+// Photos album. See https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search
+message GooglePhotosMediaRequest {
     string album_id = 1;
     string page_size = 2;
     int32 page_token = 3;
 }
 
+// Contains all metadata associated with a particular album
 message AlbumInfo {
+    oneof photos_platform {
+        GoogleAlbumInfo google_album = 1;
+    }
+}
+
+// Conforms to the JSON response of the Google Photos API for listing albums
+// See https://developers.google.com/photos/library/reference/rest/v1/albums/list
+message GoogleAlbumInfo {
     string id = 1;
     string title = 2;
     string product_url = 3;
@@ -30,18 +57,43 @@ message AlbumInfo {
     string cover_photo_media_item_id = 6;
 }
 
+// Contains zero or more albums from a photos platform
 message AlbumsInfo {
     repeated AlbumInfo albums = 1;
-    string next_page_token = 2;
+    PageTokens page_tokens = 2;
 }
 
+// Contains all "next page tokens" from any REST request that returned partial results.
+// Explicitly separating platforms for nomenclature and ease of JSON Unmarshaling when
+// Unmarshaling a response from a platform into a protobuf
+message PageTokens{
+    GooglePageToken google_token = 1;
+}
+
+// Field member of "next_page_token" conforms to the JSON response from Google Photos
+// REST API
+message GooglePageToken {
+    string next_page_token = 1;
+}
+
+// Contains all media info returned from a media retrieval request
 message MediaInfo {
     repeated Media media_items = 1;
-    string page_token = 2;
+    PageTokens page_token = 2;
 }
 
-
+// Explicitly separating platforms for nomenclature and ease of JSON Unmarshaling when
+// Unmarshaling a response from a platform into a protobuf.
 message Media {
+    oneof photos_platform {
+        GoogleMedia google_media = 1;
+    }
+}
+
+// Conforms to the JSON response of Google Photos API for listing and/or retrieving
+// media from the platform.
+// See https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search
+message GoogleMedia {
     string id = 1;
     string product_url = 2;
     string mime_type = 3;

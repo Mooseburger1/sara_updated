@@ -24,14 +24,16 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Request to get a list all available albums for a given account
+// Request to get a list of all available albums for a given account. For platforms
+// like Google Photos, it would be actual albums a user has created. For media agnostic
+// services like Dropbox and AWS S3, this may be folders or directories a user has
+// created specifically to hold photos and media.
 type AlbumListRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize  int32  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	GoogleRequest *GooglePhotosAlbumsRequest `protobuf:"bytes,1,opt,name=google_request,json=googleRequest,proto3" json:"google_request,omitempty"`
 }
 
 func (x *AlbumListRequest) Reset() {
@@ -66,33 +68,26 @@ func (*AlbumListRequest) Descriptor() ([]byte, []int) {
 	return file_photos_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *AlbumListRequest) GetPageSize() int32 {
+func (x *AlbumListRequest) GetGoogleRequest() *GooglePhotosAlbumsRequest {
 	if x != nil {
-		return x.PageSize
+		return x.GoogleRequest
 	}
-	return 0
+	return nil
 }
 
-func (x *AlbumListRequest) GetPageToken() string {
-	if x != nil {
-		return x.PageToken
-	}
-	return ""
-}
-
-// Gets media from a specific album
-type FromAlbumRequest struct {
+// Conforms to the REST API request to list all albums for the authenticated user.
+// See https://developers.google.com/photos/library/reference/rest/v1/albums/list
+type GooglePhotosAlbumsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AlbumId   string `protobuf:"bytes,1,opt,name=album_id,json=albumId,proto3" json:"album_id,omitempty"`
-	PageSize  string `protobuf:"bytes,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken int32  `protobuf:"varint,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	PageSize  int32  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 }
 
-func (x *FromAlbumRequest) Reset() {
-	*x = FromAlbumRequest{}
+func (x *GooglePhotosAlbumsRequest) Reset() {
+	*x = GooglePhotosAlbumsRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_photos_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -100,13 +95,13 @@ func (x *FromAlbumRequest) Reset() {
 	}
 }
 
-func (x *FromAlbumRequest) String() string {
+func (x *GooglePhotosAlbumsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*FromAlbumRequest) ProtoMessage() {}
+func (*GooglePhotosAlbumsRequest) ProtoMessage() {}
 
-func (x *FromAlbumRequest) ProtoReflect() protoreflect.Message {
+func (x *GooglePhotosAlbumsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_photos_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -118,49 +113,172 @@ func (x *FromAlbumRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use FromAlbumRequest.ProtoReflect.Descriptor instead.
-func (*FromAlbumRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GooglePhotosAlbumsRequest.ProtoReflect.Descriptor instead.
+func (*GooglePhotosAlbumsRequest) Descriptor() ([]byte, []int) {
 	return file_photos_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *FromAlbumRequest) GetAlbumId() string {
+func (x *GooglePhotosAlbumsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *GooglePhotosAlbumsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+// Gets media from a specific album for a specific photo host {i.e. google photos, dropbox, s3}
+type GetMediaRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to PhotosPlatform:
+	//	*GetMediaRequest_GoogleRequest
+	PhotosPlatform isGetMediaRequest_PhotosPlatform `protobuf_oneof:"photos_platform"`
+}
+
+func (x *GetMediaRequest) Reset() {
+	*x = GetMediaRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_photos_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetMediaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMediaRequest) ProtoMessage() {}
+
+func (x *GetMediaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_photos_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMediaRequest.ProtoReflect.Descriptor instead.
+func (*GetMediaRequest) Descriptor() ([]byte, []int) {
+	return file_photos_proto_rawDescGZIP(), []int{2}
+}
+
+func (m *GetMediaRequest) GetPhotosPlatform() isGetMediaRequest_PhotosPlatform {
+	if m != nil {
+		return m.PhotosPlatform
+	}
+	return nil
+}
+
+func (x *GetMediaRequest) GetGoogleRequest() *GooglePhotosMediaRequest {
+	if x, ok := x.GetPhotosPlatform().(*GetMediaRequest_GoogleRequest); ok {
+		return x.GoogleRequest
+	}
+	return nil
+}
+
+type isGetMediaRequest_PhotosPlatform interface {
+	isGetMediaRequest_PhotosPlatform()
+}
+
+type GetMediaRequest_GoogleRequest struct {
+	GoogleRequest *GooglePhotosMediaRequest `protobuf:"bytes,1,opt,name=google_request,json=googleRequest,proto3,oneof"`
+}
+
+func (*GetMediaRequest_GoogleRequest) isGetMediaRequest_PhotosPlatform() {}
+
+// Conforms to the REST API request to list all media associated with a particular Google
+// Photos album. See https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search
+type GooglePhotosMediaRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	AlbumId   string `protobuf:"bytes,1,opt,name=album_id,json=albumId,proto3" json:"album_id,omitempty"`
+	PageSize  string `protobuf:"bytes,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken int32  `protobuf:"varint,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+}
+
+func (x *GooglePhotosMediaRequest) Reset() {
+	*x = GooglePhotosMediaRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_photos_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GooglePhotosMediaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GooglePhotosMediaRequest) ProtoMessage() {}
+
+func (x *GooglePhotosMediaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_photos_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GooglePhotosMediaRequest.ProtoReflect.Descriptor instead.
+func (*GooglePhotosMediaRequest) Descriptor() ([]byte, []int) {
+	return file_photos_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GooglePhotosMediaRequest) GetAlbumId() string {
 	if x != nil {
 		return x.AlbumId
 	}
 	return ""
 }
 
-func (x *FromAlbumRequest) GetPageSize() string {
+func (x *GooglePhotosMediaRequest) GetPageSize() string {
 	if x != nil {
 		return x.PageSize
 	}
 	return ""
 }
 
-func (x *FromAlbumRequest) GetPageToken() int32 {
+func (x *GooglePhotosMediaRequest) GetPageToken() int32 {
 	if x != nil {
 		return x.PageToken
 	}
 	return 0
 }
 
+// Contains all metadata associated with a particular album
 type AlbumInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                    string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Title                 string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	ProductUrl            string `protobuf:"bytes,3,opt,name=product_url,json=productUrl,proto3" json:"product_url,omitempty"`
-	MediaItemsCount       int32  `protobuf:"varint,4,opt,name=media_items_count,json=mediaItemsCount,proto3" json:"media_items_count,omitempty"`
-	CoverPhotoBaseUrl     string `protobuf:"bytes,5,opt,name=cover_photo_base_url,json=coverPhotoBaseUrl,proto3" json:"cover_photo_base_url,omitempty"`
-	CoverPhotoMediaItemId string `protobuf:"bytes,6,opt,name=cover_photo_media_item_id,json=coverPhotoMediaItemId,proto3" json:"cover_photo_media_item_id,omitempty"`
+	// Types that are assignable to PhotosPlatform:
+	//	*AlbumInfo_GoogleAlbum
+	PhotosPlatform isAlbumInfo_PhotosPlatform `protobuf_oneof:"photos_platform"`
 }
 
 func (x *AlbumInfo) Reset() {
 	*x = AlbumInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_photos_proto_msgTypes[2]
+		mi := &file_photos_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -173,7 +291,7 @@ func (x *AlbumInfo) String() string {
 func (*AlbumInfo) ProtoMessage() {}
 
 func (x *AlbumInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_photos_proto_msgTypes[2]
+	mi := &file_photos_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -186,64 +304,136 @@ func (x *AlbumInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AlbumInfo.ProtoReflect.Descriptor instead.
 func (*AlbumInfo) Descriptor() ([]byte, []int) {
-	return file_photos_proto_rawDescGZIP(), []int{2}
+	return file_photos_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *AlbumInfo) GetId() string {
+func (m *AlbumInfo) GetPhotosPlatform() isAlbumInfo_PhotosPlatform {
+	if m != nil {
+		return m.PhotosPlatform
+	}
+	return nil
+}
+
+func (x *AlbumInfo) GetGoogleAlbum() *GoogleAlbumInfo {
+	if x, ok := x.GetPhotosPlatform().(*AlbumInfo_GoogleAlbum); ok {
+		return x.GoogleAlbum
+	}
+	return nil
+}
+
+type isAlbumInfo_PhotosPlatform interface {
+	isAlbumInfo_PhotosPlatform()
+}
+
+type AlbumInfo_GoogleAlbum struct {
+	GoogleAlbum *GoogleAlbumInfo `protobuf:"bytes,1,opt,name=google_album,json=googleAlbum,proto3,oneof"`
+}
+
+func (*AlbumInfo_GoogleAlbum) isAlbumInfo_PhotosPlatform() {}
+
+// Conforms to the JSON response of the Google Photos API for listing albums
+// See https://developers.google.com/photos/library/reference/rest/v1/albums/list
+type GoogleAlbumInfo struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id                    string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Title                 string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	ProductUrl            string `protobuf:"bytes,3,opt,name=product_url,json=productUrl,proto3" json:"product_url,omitempty"`
+	MediaItemsCount       int32  `protobuf:"varint,4,opt,name=media_items_count,json=mediaItemsCount,proto3" json:"media_items_count,omitempty"`
+	CoverPhotoBaseUrl     string `protobuf:"bytes,5,opt,name=cover_photo_base_url,json=coverPhotoBaseUrl,proto3" json:"cover_photo_base_url,omitempty"`
+	CoverPhotoMediaItemId string `protobuf:"bytes,6,opt,name=cover_photo_media_item_id,json=coverPhotoMediaItemId,proto3" json:"cover_photo_media_item_id,omitempty"`
+}
+
+func (x *GoogleAlbumInfo) Reset() {
+	*x = GoogleAlbumInfo{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_photos_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GoogleAlbumInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GoogleAlbumInfo) ProtoMessage() {}
+
+func (x *GoogleAlbumInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_photos_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GoogleAlbumInfo.ProtoReflect.Descriptor instead.
+func (*GoogleAlbumInfo) Descriptor() ([]byte, []int) {
+	return file_photos_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GoogleAlbumInfo) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *AlbumInfo) GetTitle() string {
+func (x *GoogleAlbumInfo) GetTitle() string {
 	if x != nil {
 		return x.Title
 	}
 	return ""
 }
 
-func (x *AlbumInfo) GetProductUrl() string {
+func (x *GoogleAlbumInfo) GetProductUrl() string {
 	if x != nil {
 		return x.ProductUrl
 	}
 	return ""
 }
 
-func (x *AlbumInfo) GetMediaItemsCount() int32 {
+func (x *GoogleAlbumInfo) GetMediaItemsCount() int32 {
 	if x != nil {
 		return x.MediaItemsCount
 	}
 	return 0
 }
 
-func (x *AlbumInfo) GetCoverPhotoBaseUrl() string {
+func (x *GoogleAlbumInfo) GetCoverPhotoBaseUrl() string {
 	if x != nil {
 		return x.CoverPhotoBaseUrl
 	}
 	return ""
 }
 
-func (x *AlbumInfo) GetCoverPhotoMediaItemId() string {
+func (x *GoogleAlbumInfo) GetCoverPhotoMediaItemId() string {
 	if x != nil {
 		return x.CoverPhotoMediaItemId
 	}
 	return ""
 }
 
+// Contains zero or more albums from a photos platform
 type AlbumsInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Albums        []*AlbumInfo `protobuf:"bytes,1,rep,name=albums,proto3" json:"albums,omitempty"`
-	NextPageToken string       `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	Albums     []*AlbumInfo `protobuf:"bytes,1,rep,name=albums,proto3" json:"albums,omitempty"`
+	PageTokens *PageTokens  `protobuf:"bytes,2,opt,name=page_tokens,json=pageTokens,proto3" json:"page_tokens,omitempty"`
 }
 
 func (x *AlbumsInfo) Reset() {
 	*x = AlbumsInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_photos_proto_msgTypes[3]
+		mi := &file_photos_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -256,7 +446,7 @@ func (x *AlbumsInfo) String() string {
 func (*AlbumsInfo) ProtoMessage() {}
 
 func (x *AlbumsInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_photos_proto_msgTypes[3]
+	mi := &file_photos_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -269,7 +459,7 @@ func (x *AlbumsInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AlbumsInfo.ProtoReflect.Descriptor instead.
 func (*AlbumsInfo) Descriptor() ([]byte, []int) {
-	return file_photos_proto_rawDescGZIP(), []int{3}
+	return file_photos_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *AlbumsInfo) GetAlbums() []*AlbumInfo {
@@ -279,26 +469,126 @@ func (x *AlbumsInfo) GetAlbums() []*AlbumInfo {
 	return nil
 }
 
-func (x *AlbumsInfo) GetNextPageToken() string {
+func (x *AlbumsInfo) GetPageTokens() *PageTokens {
+	if x != nil {
+		return x.PageTokens
+	}
+	return nil
+}
+
+// Contains all "next page tokens" from any REST request that returned partial results.
+// Explicitly separating platforms for nomenclature and ease of JSON Unmarshaling when
+// Unmarshaling a response from a platform into a protobuf
+type PageTokens struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	GoogleToken *GooglePageToken `protobuf:"bytes,1,opt,name=google_token,json=googleToken,proto3" json:"google_token,omitempty"`
+}
+
+func (x *PageTokens) Reset() {
+	*x = PageTokens{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_photos_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PageTokens) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageTokens) ProtoMessage() {}
+
+func (x *PageTokens) ProtoReflect() protoreflect.Message {
+	mi := &file_photos_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageTokens.ProtoReflect.Descriptor instead.
+func (*PageTokens) Descriptor() ([]byte, []int) {
+	return file_photos_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *PageTokens) GetGoogleToken() *GooglePageToken {
+	if x != nil {
+		return x.GoogleToken
+	}
+	return nil
+}
+
+// Field member of "next_page_token" conforms to the JSON response from Google Photos
+// REST API
+type GooglePageToken struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	NextPageToken string `protobuf:"bytes,1,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+}
+
+func (x *GooglePageToken) Reset() {
+	*x = GooglePageToken{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_photos_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GooglePageToken) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GooglePageToken) ProtoMessage() {}
+
+func (x *GooglePageToken) ProtoReflect() protoreflect.Message {
+	mi := &file_photos_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GooglePageToken.ProtoReflect.Descriptor instead.
+func (*GooglePageToken) Descriptor() ([]byte, []int) {
+	return file_photos_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GooglePageToken) GetNextPageToken() string {
 	if x != nil {
 		return x.NextPageToken
 	}
 	return ""
 }
 
+// Contains all media info returned from a media retrieval request
 type MediaInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	MediaItems []*Media `protobuf:"bytes,1,rep,name=media_items,json=mediaItems,proto3" json:"media_items,omitempty"`
-	PageToken  string   `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	MediaItems []*Media    `protobuf:"bytes,1,rep,name=media_items,json=mediaItems,proto3" json:"media_items,omitempty"`
+	PageToken  *PageTokens `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 }
 
 func (x *MediaInfo) Reset() {
 	*x = MediaInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_photos_proto_msgTypes[4]
+		mi := &file_photos_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -311,7 +601,7 @@ func (x *MediaInfo) String() string {
 func (*MediaInfo) ProtoMessage() {}
 
 func (x *MediaInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_photos_proto_msgTypes[4]
+	mi := &file_photos_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -324,7 +614,7 @@ func (x *MediaInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MediaInfo.ProtoReflect.Descriptor instead.
 func (*MediaInfo) Descriptor() ([]byte, []int) {
-	return file_photos_proto_rawDescGZIP(), []int{4}
+	return file_photos_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *MediaInfo) GetMediaItems() []*Media {
@@ -334,27 +624,29 @@ func (x *MediaInfo) GetMediaItems() []*Media {
 	return nil
 }
 
-func (x *MediaInfo) GetPageToken() string {
+func (x *MediaInfo) GetPageToken() *PageTokens {
 	if x != nil {
 		return x.PageToken
 	}
-	return ""
+	return nil
 }
 
+// Explicitly separating platforms for nomenclature and ease of JSON Unmarshaling when
+// Unmarshaling a response from a platform into a protobuf.
 type Media struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id         string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ProductUrl string `protobuf:"bytes,2,opt,name=product_url,json=productUrl,proto3" json:"product_url,omitempty"`
-	MimeType   string `protobuf:"bytes,3,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`
+	// Types that are assignable to PhotosPlatform:
+	//	*Media_GoogleMedia
+	PhotosPlatform isMedia_PhotosPlatform `protobuf_oneof:"photos_platform"`
 }
 
 func (x *Media) Reset() {
 	*x = Media{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_photos_proto_msgTypes[5]
+		mi := &file_photos_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -367,7 +659,7 @@ func (x *Media) String() string {
 func (*Media) ProtoMessage() {}
 
 func (x *Media) ProtoReflect() protoreflect.Message {
-	mi := &file_photos_proto_msgTypes[5]
+	mi := &file_photos_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -380,24 +672,93 @@ func (x *Media) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Media.ProtoReflect.Descriptor instead.
 func (*Media) Descriptor() ([]byte, []int) {
-	return file_photos_proto_rawDescGZIP(), []int{5}
+	return file_photos_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *Media) GetId() string {
+func (m *Media) GetPhotosPlatform() isMedia_PhotosPlatform {
+	if m != nil {
+		return m.PhotosPlatform
+	}
+	return nil
+}
+
+func (x *Media) GetGoogleMedia() *GoogleMedia {
+	if x, ok := x.GetPhotosPlatform().(*Media_GoogleMedia); ok {
+		return x.GoogleMedia
+	}
+	return nil
+}
+
+type isMedia_PhotosPlatform interface {
+	isMedia_PhotosPlatform()
+}
+
+type Media_GoogleMedia struct {
+	GoogleMedia *GoogleMedia `protobuf:"bytes,1,opt,name=google_media,json=googleMedia,proto3,oneof"`
+}
+
+func (*Media_GoogleMedia) isMedia_PhotosPlatform() {}
+
+// Conforms to the JSON response of Google Photos API for listing and/or retrieving
+// media from the platform.
+// See https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search
+type GoogleMedia struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id         string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ProductUrl string `protobuf:"bytes,2,opt,name=product_url,json=productUrl,proto3" json:"product_url,omitempty"`
+	MimeType   string `protobuf:"bytes,3,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`
+}
+
+func (x *GoogleMedia) Reset() {
+	*x = GoogleMedia{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_photos_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GoogleMedia) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GoogleMedia) ProtoMessage() {}
+
+func (x *GoogleMedia) ProtoReflect() protoreflect.Message {
+	mi := &file_photos_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GoogleMedia.ProtoReflect.Descriptor instead.
+func (*GoogleMedia) Descriptor() ([]byte, []int) {
+	return file_photos_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GoogleMedia) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *Media) GetProductUrl() string {
+func (x *GoogleMedia) GetProductUrl() string {
 	if x != nil {
 		return x.ProductUrl
 	}
 	return ""
 }
 
-func (x *Media) GetMimeType() string {
+func (x *GoogleMedia) GetMimeType() string {
 	if x != nil {
 		return x.MimeType
 	}
@@ -407,61 +768,93 @@ func (x *Media) GetMimeType() string {
 var File_photos_proto protoreflect.FileDescriptor
 
 var file_photos_proto_rawDesc = []byte{
-	0x0a, 0x0c, 0x70, 0x68, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x4e,
+	0x0a, 0x0c, 0x70, 0x68, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x55,
 	0x0a, 0x10, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x41, 0x0a, 0x0e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x5f, 0x72, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x47, 0x6f, 0x6f,
+	0x67, 0x6c, 0x65, 0x50, 0x68, 0x6f, 0x74, 0x6f, 0x73, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x73, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x0d, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x57, 0x0a, 0x19, 0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x50,
+	0x68, 0x6f, 0x74, 0x6f, 0x73, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
 	0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x73, 0x69, 0x7a, 0x65, 0x18,
 	0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x70, 0x61, 0x67, 0x65, 0x53, 0x69, 0x7a, 0x65, 0x12,
 	0x1d, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x09, 0x70, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x69,
-	0x0a, 0x10, 0x46, 0x72, 0x6f, 0x6d, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x61, 0x6c, 0x62, 0x75, 0x6d, 0x5f, 0x69, 0x64, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x6c, 0x62, 0x75, 0x6d, 0x49, 0x64, 0x12, 0x1b, 0x0a,
-	0x09, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x08, 0x70, 0x61, 0x67, 0x65, 0x53, 0x69, 0x7a, 0x65, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x61,
-	0x67, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09,
-	0x70, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0xe9, 0x01, 0x0a, 0x09, 0x41, 0x6c,
-	0x62, 0x75, 0x6d, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x69, 0x74, 0x6c, 0x65,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x69, 0x74, 0x6c, 0x65, 0x12, 0x1f, 0x0a,
-	0x0b, 0x70, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x0a, 0x70, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74, 0x55, 0x72, 0x6c, 0x12, 0x2a,
-	0x0a, 0x11, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x5f, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x5f, 0x63, 0x6f,
-	0x75, 0x6e, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0f, 0x6d, 0x65, 0x64, 0x69, 0x61,
-	0x49, 0x74, 0x65, 0x6d, 0x73, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x2f, 0x0a, 0x14, 0x63, 0x6f,
-	0x76, 0x65, 0x72, 0x5f, 0x70, 0x68, 0x6f, 0x74, 0x6f, 0x5f, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x75,
-	0x72, 0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x11, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x50,
-	0x68, 0x6f, 0x74, 0x6f, 0x42, 0x61, 0x73, 0x65, 0x55, 0x72, 0x6c, 0x12, 0x38, 0x0a, 0x19, 0x63,
-	0x6f, 0x76, 0x65, 0x72, 0x5f, 0x70, 0x68, 0x6f, 0x74, 0x6f, 0x5f, 0x6d, 0x65, 0x64, 0x69, 0x61,
-	0x5f, 0x69, 0x74, 0x65, 0x6d, 0x5f, 0x69, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x15,
-	0x63, 0x6f, 0x76, 0x65, 0x72, 0x50, 0x68, 0x6f, 0x74, 0x6f, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x49,
-	0x74, 0x65, 0x6d, 0x49, 0x64, 0x22, 0x58, 0x0a, 0x0a, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x73, 0x49,
-	0x6e, 0x66, 0x6f, 0x12, 0x22, 0x0a, 0x06, 0x61, 0x6c, 0x62, 0x75, 0x6d, 0x73, 0x18, 0x01, 0x20,
-	0x03, 0x28, 0x0b, 0x32, 0x0a, 0x2e, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x49, 0x6e, 0x66, 0x6f, 0x52,
-	0x06, 0x61, 0x6c, 0x62, 0x75, 0x6d, 0x73, 0x12, 0x26, 0x0a, 0x0f, 0x6e, 0x65, 0x78, 0x74, 0x5f,
-	0x70, 0x61, 0x67, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x0d, 0x6e, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22,
-	0x53, 0x0a, 0x09, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x27, 0x0a, 0x0b,
-	0x6d, 0x65, 0x64, 0x69, 0x61, 0x5f, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
-	0x0b, 0x32, 0x06, 0x2e, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x52, 0x0a, 0x6d, 0x65, 0x64, 0x69, 0x61,
-	0x49, 0x74, 0x65, 0x6d, 0x73, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x74, 0x6f,
-	0x6b, 0x65, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x70, 0x61, 0x67, 0x65, 0x54,
-	0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x55, 0x0a, 0x05, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x12, 0x0e, 0x0a,
-	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x1f, 0x0a,
-	0x0b, 0x70, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x0a, 0x70, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74, 0x55, 0x72, 0x6c, 0x12, 0x1b,
-	0x0a, 0x09, 0x6d, 0x69, 0x6d, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x08, 0x6d, 0x69, 0x6d, 0x65, 0x54, 0x79, 0x70, 0x65, 0x32, 0x72, 0x0a, 0x12, 0x47,
-	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x50, 0x68, 0x6f, 0x74, 0x6f, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
-	0x65, 0x12, 0x2c, 0x0a, 0x0a, 0x4c, 0x69, 0x73, 0x74, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x73, 0x12,
-	0x11, 0x2e, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x0b, 0x2e, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x73, 0x49, 0x6e, 0x66, 0x6f, 0x12,
-	0x2e, 0x0a, 0x0d, 0x47, 0x65, 0x74, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x4d, 0x65, 0x64, 0x69, 0x61,
-	0x12, 0x11, 0x2e, 0x46, 0x72, 0x6f, 0x6d, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x1a, 0x0a, 0x2e, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x42,
-	0x28, 0x5a, 0x26, 0x73, 0x61, 0x72, 0x61, 0x5f, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x2f,
-	0x62, 0x61, 0x63, 0x6b, 0x65, 0x6e, 0x64, 0x2f, 0x67, 0x72, 0x70, 0x63, 0x2f, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x2f, 0x70, 0x68, 0x6f, 0x74, 0x6f, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x01, 0x28, 0x09, 0x52, 0x09, 0x70, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x68,
+	0x0a, 0x0f, 0x47, 0x65, 0x74, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x42, 0x0a, 0x0e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x5f, 0x72, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x47, 0x6f, 0x6f, 0x67,
+	0x6c, 0x65, 0x50, 0x68, 0x6f, 0x74, 0x6f, 0x73, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x48, 0x00, 0x52, 0x0d, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x42, 0x11, 0x0a, 0x0f, 0x70, 0x68, 0x6f, 0x74, 0x6f, 0x73, 0x5f,
+	0x70, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x22, 0x71, 0x0a, 0x18, 0x47, 0x6f, 0x6f, 0x67,
+	0x6c, 0x65, 0x50, 0x68, 0x6f, 0x74, 0x6f, 0x73, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x61, 0x6c, 0x62, 0x75, 0x6d, 0x5f, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x6c, 0x62, 0x75, 0x6d, 0x49, 0x64, 0x12,
+	0x1b, 0x0a, 0x09, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x08, 0x70, 0x61, 0x67, 0x65, 0x53, 0x69, 0x7a, 0x65, 0x12, 0x1d, 0x0a, 0x0a,
+	0x70, 0x61, 0x67, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05,
+	0x52, 0x09, 0x70, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x55, 0x0a, 0x09, 0x41,
+	0x6c, 0x62, 0x75, 0x6d, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x35, 0x0a, 0x0c, 0x67, 0x6f, 0x6f, 0x67,
+	0x6c, 0x65, 0x5f, 0x61, 0x6c, 0x62, 0x75, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10,
+	0x2e, 0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x49, 0x6e, 0x66, 0x6f,
+	0x48, 0x00, 0x52, 0x0b, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x42,
+	0x11, 0x0a, 0x0f, 0x70, 0x68, 0x6f, 0x74, 0x6f, 0x73, 0x5f, 0x70, 0x6c, 0x61, 0x74, 0x66, 0x6f,
+	0x72, 0x6d, 0x22, 0xef, 0x01, 0x0a, 0x0f, 0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x41, 0x6c, 0x62,
+	0x75, 0x6d, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x69, 0x74, 0x6c, 0x65, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x69, 0x74, 0x6c, 0x65, 0x12, 0x1f, 0x0a, 0x0b,
+	0x70, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0a, 0x70, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74, 0x55, 0x72, 0x6c, 0x12, 0x2a, 0x0a,
+	0x11, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x5f, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x5f, 0x63, 0x6f, 0x75,
+	0x6e, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0f, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x49,
+	0x74, 0x65, 0x6d, 0x73, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x2f, 0x0a, 0x14, 0x63, 0x6f, 0x76,
+	0x65, 0x72, 0x5f, 0x70, 0x68, 0x6f, 0x74, 0x6f, 0x5f, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x75, 0x72,
+	0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x11, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x50, 0x68,
+	0x6f, 0x74, 0x6f, 0x42, 0x61, 0x73, 0x65, 0x55, 0x72, 0x6c, 0x12, 0x38, 0x0a, 0x19, 0x63, 0x6f,
+	0x76, 0x65, 0x72, 0x5f, 0x70, 0x68, 0x6f, 0x74, 0x6f, 0x5f, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x5f,
+	0x69, 0x74, 0x65, 0x6d, 0x5f, 0x69, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x15, 0x63,
+	0x6f, 0x76, 0x65, 0x72, 0x50, 0x68, 0x6f, 0x74, 0x6f, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x49, 0x74,
+	0x65, 0x6d, 0x49, 0x64, 0x22, 0x5e, 0x0a, 0x0a, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x73, 0x49, 0x6e,
+	0x66, 0x6f, 0x12, 0x22, 0x0a, 0x06, 0x61, 0x6c, 0x62, 0x75, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x0a, 0x2e, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x06,
+	0x61, 0x6c, 0x62, 0x75, 0x6d, 0x73, 0x12, 0x2c, 0x0a, 0x0b, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x74,
+	0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x50, 0x61,
+	0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x65, 0x54, 0x6f,
+	0x6b, 0x65, 0x6e, 0x73, 0x22, 0x41, 0x0a, 0x0a, 0x50, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65,
+	0x6e, 0x73, 0x12, 0x33, 0x0a, 0x0c, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x5f, 0x74, 0x6f, 0x6b,
+	0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x47, 0x6f, 0x6f, 0x67, 0x6c,
+	0x65, 0x50, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x0b, 0x67, 0x6f, 0x6f, 0x67,
+	0x6c, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x39, 0x0a, 0x0f, 0x47, 0x6f, 0x6f, 0x67, 0x6c,
+	0x65, 0x50, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x26, 0x0a, 0x0f, 0x6e, 0x65,
+	0x78, 0x74, 0x5f, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0d, 0x6e, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b,
+	0x65, 0x6e, 0x22, 0x60, 0x0a, 0x09, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x12,
+	0x27, 0x0a, 0x0b, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x5f, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x18, 0x01,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x06, 0x2e, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x52, 0x0a, 0x6d, 0x65,
+	0x64, 0x69, 0x61, 0x49, 0x74, 0x65, 0x6d, 0x73, 0x12, 0x2a, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x65,
+	0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x50,
+	0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x52, 0x09, 0x70, 0x61, 0x67, 0x65, 0x54,
+	0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x4d, 0x0a, 0x05, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x12, 0x31, 0x0a,
+	0x0c, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x5f, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x4d, 0x65, 0x64, 0x69,
+	0x61, 0x48, 0x00, 0x52, 0x0b, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x4d, 0x65, 0x64, 0x69, 0x61,
+	0x42, 0x11, 0x0a, 0x0f, 0x70, 0x68, 0x6f, 0x74, 0x6f, 0x73, 0x5f, 0x70, 0x6c, 0x61, 0x74, 0x66,
+	0x6f, 0x72, 0x6d, 0x22, 0x5b, 0x0a, 0x0b, 0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x4d, 0x65, 0x64,
+	0x69, 0x61, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02,
+	0x69, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x70, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74, 0x5f, 0x75, 0x72,
+	0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x70, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74,
+	0x55, 0x72, 0x6c, 0x12, 0x1b, 0x0a, 0x09, 0x6d, 0x69, 0x6d, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x6d, 0x69, 0x6d, 0x65, 0x54, 0x79, 0x70, 0x65,
+	0x32, 0x6b, 0x0a, 0x0c, 0x50, 0x68, 0x6f, 0x74, 0x6f, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
+	0x12, 0x2c, 0x0a, 0x0a, 0x4c, 0x69, 0x73, 0x74, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x73, 0x12, 0x11,
+	0x2e, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x0b, 0x2e, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x73, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x2d,
+	0x0a, 0x0d, 0x47, 0x65, 0x74, 0x41, 0x6c, 0x62, 0x75, 0x6d, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x12,
+	0x10, 0x2e, 0x47, 0x65, 0x74, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x0a, 0x2e, 0x4d, 0x65, 0x64, 0x69, 0x61, 0x49, 0x6e, 0x66, 0x6f, 0x42, 0x28, 0x5a,
+	0x26, 0x73, 0x61, 0x72, 0x61, 0x5f, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x2f, 0x62, 0x61,
+	0x63, 0x6b, 0x65, 0x6e, 0x64, 0x2f, 0x67, 0x72, 0x70, 0x63, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x2f, 0x70, 0x68, 0x6f, 0x74, 0x6f, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -476,27 +869,40 @@ func file_photos_proto_rawDescGZIP() []byte {
 	return file_photos_proto_rawDescData
 }
 
-var file_photos_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_photos_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_photos_proto_goTypes = []interface{}{
-	(*AlbumListRequest)(nil), // 0: AlbumListRequest
-	(*FromAlbumRequest)(nil), // 1: FromAlbumRequest
-	(*AlbumInfo)(nil),        // 2: AlbumInfo
-	(*AlbumsInfo)(nil),       // 3: AlbumsInfo
-	(*MediaInfo)(nil),        // 4: MediaInfo
-	(*Media)(nil),            // 5: Media
+	(*AlbumListRequest)(nil),          // 0: AlbumListRequest
+	(*GooglePhotosAlbumsRequest)(nil), // 1: GooglePhotosAlbumsRequest
+	(*GetMediaRequest)(nil),           // 2: GetMediaRequest
+	(*GooglePhotosMediaRequest)(nil),  // 3: GooglePhotosMediaRequest
+	(*AlbumInfo)(nil),                 // 4: AlbumInfo
+	(*GoogleAlbumInfo)(nil),           // 5: GoogleAlbumInfo
+	(*AlbumsInfo)(nil),                // 6: AlbumsInfo
+	(*PageTokens)(nil),                // 7: PageTokens
+	(*GooglePageToken)(nil),           // 8: GooglePageToken
+	(*MediaInfo)(nil),                 // 9: MediaInfo
+	(*Media)(nil),                     // 10: Media
+	(*GoogleMedia)(nil),               // 11: GoogleMedia
 }
 var file_photos_proto_depIdxs = []int32{
-	2, // 0: AlbumsInfo.albums:type_name -> AlbumInfo
-	5, // 1: MediaInfo.media_items:type_name -> Media
-	0, // 2: GooglePhotoService.ListAlbums:input_type -> AlbumListRequest
-	1, // 3: GooglePhotoService.GetAlbumMedia:input_type -> FromAlbumRequest
-	3, // 4: GooglePhotoService.ListAlbums:output_type -> AlbumsInfo
-	4, // 5: GooglePhotoService.GetAlbumMedia:output_type -> MediaInfo
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	1,  // 0: AlbumListRequest.google_request:type_name -> GooglePhotosAlbumsRequest
+	3,  // 1: GetMediaRequest.google_request:type_name -> GooglePhotosMediaRequest
+	5,  // 2: AlbumInfo.google_album:type_name -> GoogleAlbumInfo
+	4,  // 3: AlbumsInfo.albums:type_name -> AlbumInfo
+	7,  // 4: AlbumsInfo.page_tokens:type_name -> PageTokens
+	8,  // 5: PageTokens.google_token:type_name -> GooglePageToken
+	10, // 6: MediaInfo.media_items:type_name -> Media
+	7,  // 7: MediaInfo.page_token:type_name -> PageTokens
+	11, // 8: Media.google_media:type_name -> GoogleMedia
+	0,  // 9: PhotoService.ListAlbums:input_type -> AlbumListRequest
+	2,  // 10: PhotoService.GetAlbumMedia:input_type -> GetMediaRequest
+	6,  // 11: PhotoService.ListAlbums:output_type -> AlbumsInfo
+	9,  // 12: PhotoService.GetAlbumMedia:output_type -> MediaInfo
+	11, // [11:13] is the sub-list for method output_type
+	9,  // [9:11] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_photos_proto_init() }
@@ -518,7 +924,7 @@ func file_photos_proto_init() {
 			}
 		}
 		file_photos_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*FromAlbumRequest); i {
+			switch v := v.(*GooglePhotosAlbumsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -530,7 +936,7 @@ func file_photos_proto_init() {
 			}
 		}
 		file_photos_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AlbumInfo); i {
+			switch v := v.(*GetMediaRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -542,7 +948,7 @@ func file_photos_proto_init() {
 			}
 		}
 		file_photos_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AlbumsInfo); i {
+			switch v := v.(*GooglePhotosMediaRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -554,7 +960,7 @@ func file_photos_proto_init() {
 			}
 		}
 		file_photos_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MediaInfo); i {
+			switch v := v.(*AlbumInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -566,6 +972,66 @@ func file_photos_proto_init() {
 			}
 		}
 		file_photos_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GoogleAlbumInfo); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_photos_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AlbumsInfo); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_photos_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PageTokens); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_photos_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GooglePageToken); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_photos_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MediaInfo); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_photos_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Media); i {
 			case 0:
 				return &v.state
@@ -577,6 +1043,27 @@ func file_photos_proto_init() {
 				return nil
 			}
 		}
+		file_photos_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GoogleMedia); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
+	file_photos_proto_msgTypes[2].OneofWrappers = []interface{}{
+		(*GetMediaRequest_GoogleRequest)(nil),
+	}
+	file_photos_proto_msgTypes[4].OneofWrappers = []interface{}{
+		(*AlbumInfo_GoogleAlbum)(nil),
+	}
+	file_photos_proto_msgTypes[10].OneofWrappers = []interface{}{
+		(*Media_GoogleMedia)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -584,7 +1071,7 @@ func file_photos_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_photos_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -606,108 +1093,108 @@ var _ grpc.ClientConnInterface
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion6
 
-// GooglePhotoServiceClient is the client API for GooglePhotoService service.
+// PhotoServiceClient is the client API for PhotoService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type GooglePhotoServiceClient interface {
+type PhotoServiceClient interface {
 	ListAlbums(ctx context.Context, in *AlbumListRequest, opts ...grpc.CallOption) (*AlbumsInfo, error)
-	GetAlbumMedia(ctx context.Context, in *FromAlbumRequest, opts ...grpc.CallOption) (*MediaInfo, error)
+	GetAlbumMedia(ctx context.Context, in *GetMediaRequest, opts ...grpc.CallOption) (*MediaInfo, error)
 }
 
-type googlePhotoServiceClient struct {
+type photoServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewGooglePhotoServiceClient(cc grpc.ClientConnInterface) GooglePhotoServiceClient {
-	return &googlePhotoServiceClient{cc}
+func NewPhotoServiceClient(cc grpc.ClientConnInterface) PhotoServiceClient {
+	return &photoServiceClient{cc}
 }
 
-func (c *googlePhotoServiceClient) ListAlbums(ctx context.Context, in *AlbumListRequest, opts ...grpc.CallOption) (*AlbumsInfo, error) {
+func (c *photoServiceClient) ListAlbums(ctx context.Context, in *AlbumListRequest, opts ...grpc.CallOption) (*AlbumsInfo, error) {
 	out := new(AlbumsInfo)
-	err := c.cc.Invoke(ctx, "/GooglePhotoService/ListAlbums", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/PhotoService/ListAlbums", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *googlePhotoServiceClient) GetAlbumMedia(ctx context.Context, in *FromAlbumRequest, opts ...grpc.CallOption) (*MediaInfo, error) {
+func (c *photoServiceClient) GetAlbumMedia(ctx context.Context, in *GetMediaRequest, opts ...grpc.CallOption) (*MediaInfo, error) {
 	out := new(MediaInfo)
-	err := c.cc.Invoke(ctx, "/GooglePhotoService/GetAlbumMedia", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/PhotoService/GetAlbumMedia", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// GooglePhotoServiceServer is the server API for GooglePhotoService service.
-type GooglePhotoServiceServer interface {
+// PhotoServiceServer is the server API for PhotoService service.
+type PhotoServiceServer interface {
 	ListAlbums(context.Context, *AlbumListRequest) (*AlbumsInfo, error)
-	GetAlbumMedia(context.Context, *FromAlbumRequest) (*MediaInfo, error)
+	GetAlbumMedia(context.Context, *GetMediaRequest) (*MediaInfo, error)
 }
 
-// UnimplementedGooglePhotoServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedGooglePhotoServiceServer struct {
+// UnimplementedPhotoServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedPhotoServiceServer struct {
 }
 
-func (*UnimplementedGooglePhotoServiceServer) ListAlbums(context.Context, *AlbumListRequest) (*AlbumsInfo, error) {
+func (*UnimplementedPhotoServiceServer) ListAlbums(context.Context, *AlbumListRequest) (*AlbumsInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAlbums not implemented")
 }
-func (*UnimplementedGooglePhotoServiceServer) GetAlbumMedia(context.Context, *FromAlbumRequest) (*MediaInfo, error) {
+func (*UnimplementedPhotoServiceServer) GetAlbumMedia(context.Context, *GetMediaRequest) (*MediaInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAlbumMedia not implemented")
 }
 
-func RegisterGooglePhotoServiceServer(s *grpc.Server, srv GooglePhotoServiceServer) {
-	s.RegisterService(&_GooglePhotoService_serviceDesc, srv)
+func RegisterPhotoServiceServer(s *grpc.Server, srv PhotoServiceServer) {
+	s.RegisterService(&_PhotoService_serviceDesc, srv)
 }
 
-func _GooglePhotoService_ListAlbums_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PhotoService_ListAlbums_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AlbumListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GooglePhotoServiceServer).ListAlbums(ctx, in)
+		return srv.(PhotoServiceServer).ListAlbums(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/GooglePhotoService/ListAlbums",
+		FullMethod: "/PhotoService/ListAlbums",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GooglePhotoServiceServer).ListAlbums(ctx, req.(*AlbumListRequest))
+		return srv.(PhotoServiceServer).ListAlbums(ctx, req.(*AlbumListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GooglePhotoService_GetAlbumMedia_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FromAlbumRequest)
+func _PhotoService_GetAlbumMedia_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMediaRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GooglePhotoServiceServer).GetAlbumMedia(ctx, in)
+		return srv.(PhotoServiceServer).GetAlbumMedia(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/GooglePhotoService/GetAlbumMedia",
+		FullMethod: "/PhotoService/GetAlbumMedia",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GooglePhotoServiceServer).GetAlbumMedia(ctx, req.(*FromAlbumRequest))
+		return srv.(PhotoServiceServer).GetAlbumMedia(ctx, req.(*GetMediaRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _GooglePhotoService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "GooglePhotoService",
-	HandlerType: (*GooglePhotoServiceServer)(nil),
+var _PhotoService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "PhotoService",
+	HandlerType: (*PhotoServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "ListAlbums",
-			Handler:    _GooglePhotoService_ListAlbums_Handler,
+			Handler:    _PhotoService_ListAlbums_Handler,
 		},
 		{
 			MethodName: "GetAlbumMedia",
-			Handler:    _GooglePhotoService_GetAlbumMedia_Handler,
+			Handler:    _PhotoService_GetAlbumMedia_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
