@@ -21,10 +21,10 @@ type ClientFunc func(*protoauth.OauthConfigInfo) (*http.Client, error)
 // API services
 func CreateClient(info *protoauth.OauthConfigInfo) (*http.Client, error) {
 	token := new(oauth2.Token)
-	token.AccessToken = info.GetTokenInfo().GetAccessToken()
-	token.RefreshToken = info.GetTokenInfo().GetRefreshToken()
-	token.TokenType = info.GetTokenInfo().GetTokenType()
-	token.Expiry = info.GetTokenInfo().GetExpiry().AsTime()
+	token.AccessToken = info.GetTokenInfo().GetGoogleToken().GetAccessToken()
+	token.RefreshToken = info.GetTokenInfo().GetGoogleToken().GetRefreshToken()
+	token.TokenType = info.GetTokenInfo().GetGoogleToken().GetTokenType()
+	token.Expiry = info.GetTokenInfo().GetGoogleToken().GetExpiry().AsTime()
 
 	ctx := context.Background()
 	client := configBuilder(info).Client(ctx, token)
@@ -37,10 +37,10 @@ func CreateClient(info *protoauth.OauthConfigInfo) (*http.Client, error) {
 // API developers dashboard.
 func configBuilder(info *protoauth.OauthConfigInfo) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     info.GetAppCredentials().GetClientId(),
-		ClientSecret: info.GetAppCredentials().GetClientSecret(),
+		ClientID:     info.GetAppCredentials().GetGoogleAppCredentials().GetClientId(),
+		ClientSecret: info.GetAppCredentials().GetGoogleAppCredentials().GetClientSecret(),
 		RedirectURL:  info.GetRedirectUrl().GetUrl(),
-		Scopes:       info.GetAppScopes().GetScopes(),
+		Scopes:       info.GetAppScopes().GetGoogleScopes().GetScopes(),
 		Endpoint:     google.Endpoint,
 	}
 }
