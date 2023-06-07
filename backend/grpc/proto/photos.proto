@@ -17,6 +17,7 @@ service PhotoService {
 // created specifically to hold photos and media.
 message AlbumListRequest {
     GooglePhotosAlbumsRequest google_request = 1;
+    OauthConfigInfo oauth_info = 2;
 }
 
 // Conforms to the REST API request to list all albums for the authenticated user.
@@ -24,14 +25,12 @@ message AlbumListRequest {
 message GooglePhotosAlbumsRequest {
     int32 page_size = 1;
     string page_token = 2;
-    OauthConfigInfo oauth_info = 3;
 }
 
 // Gets media from a specific album for a specific photo host {i.e. google photos, dropbox, s3}
 message GetMediaRequest {
-    oneof photos_platform {
-        GooglePhotosMediaRequest google_request = 1;
-    }
+    GooglePhotosMediaRequest google_request = 1;
+    OauthConfigInfo oauth_info = 2;
 }
 
 // Conforms to the REST API request to list all media associated with a particular Google
