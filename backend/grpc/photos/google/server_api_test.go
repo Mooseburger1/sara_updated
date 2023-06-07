@@ -142,10 +142,10 @@ func TestListAlbums(t *testing.T) {
 			shouldPanic: true},
 		"Non200StatusReturnsError": {
 			in:       DEFAULT_ALBUM_LIST_REQUEST,
-			expected: albumsExpectation{value: nil, err: common.RpcErrorResponse(http.StatusBadRequest, string([]byte{34, 97, 108, 98, 117, 109, 115, 34, 58, 91, 93, 44})).Err()},
+			expected: albumsExpectation{value: nil, err: common.RpcErrorResponse(http.StatusBadRequest, "Unused").Err()},
 			resp: &http.Response{
 				StatusCode: http.StatusBadRequest,
-				Body:       ioutil.NopCloser(strings.NewReader(string([]byte{34, 97, 108, 98, 117, 109, 115, 34, 58, 91, 93, 44}))),
+				Body:       ioutil.NopCloser(strings.NewReader("Unused")),
 			},
 			checks:      nil,
 			clientFunc:  createClientFunc,
