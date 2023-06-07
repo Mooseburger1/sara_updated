@@ -14,7 +14,7 @@ import (
 
 var (
 	DEFAULT_LIST_REQUEST   = &photos.AlbumListRequest{}
-	DEFAULT_MEDIA_REQUEST  = &photos.FromAlbumRequest{}
+	DEFAULT_MEDIA_REQUEST  = &photos.GetMediaRequest{}
 	DEFAULT_LIST_RESPONSE  = &photos.AlbumsInfo{}
 	DEFAULT_MEDIA_RESPONSE = &photos.MediaInfo{}
 )
@@ -30,7 +30,7 @@ func (m *mockServer) ListAlbums(ctx context.Context,
 }
 
 func (m *mockServer) GetAlbumMedia(ctx context.Context,
-	rpc *photos.FromAlbumRequest) (*photos.MediaInfo, error) {
+	rpc *photos.GetMediaRequest) (*photos.MediaInfo, error) {
 	return m.albumResponse, nil
 }
 
@@ -50,7 +50,7 @@ func opFuncListener(lis *bufconn.Listener) OptFunc {
 	}
 }
 
-func prepareTest(ctx context.Context, options []OptFunc) (*photos.GooglePhotoServiceClient, func()) {
+func prepareTest(ctx context.Context, options []OptFunc) (*photos.PhotoServiceClient, func()) {
 	buffer := 101024 * 1024
 	listener := bufconn.Listen(buffer)
 
@@ -75,7 +75,7 @@ func prepareTest(ctx context.Context, options []OptFunc) (*photos.GooglePhotoSer
 		server.ShutdownServer()
 	}
 
-	client := photos.NewGooglePhotoServiceClient(conn)
+	client := photos.NewPhotoServiceClient(conn)
 
 	return &client, closer
 }
@@ -85,7 +85,7 @@ type expectation struct {
 	err   error
 }
 
-type testFunc func(context.Context, *photos.GooglePhotoServiceClient) (string, error)
+type testFunc func(context.Context, *photos.PhotoServiceClient) (string, error)
 
 func TestNewPhotosServerListAlbums(t *testing.T) {
 
@@ -95,10 +95,14 @@ func TestNewPhotosServerListAlbums(t *testing.T) {
 		expected expectation
 	}{
 		"listAlbums": {
-			opts: []OptFunc{apiServiceOptFunc(&photos.AlbumsInfo{NextPageToken: "hello"}, DEFAULT_MEDIA_RESPONSE)},
-			test: func(ctx context.Context, c *photos.GooglePhotoServiceClient) (string, error) {
+			opts: []OptFunc{apiServiceOptFunc(&photos.AlbumsInfo{
+				PageTokens: &photos.PageTokens{
+					GoogleToken: &photos.GooglePageToken{
+						NextPageToken: "hello"}}},
+				DEFAULT_MEDIA_RESPONSE)},
+			test: func(ctx context.Context, c *photos.PhotoServiceClient) (string, error) {
 				resp, err := (*c).ListAlbums(ctx, &photos.AlbumListRequest{})
-				return resp.NextPageToken, err
+				return resp.GetPageTokens().GoogleToken.GetNextPageToken(), err
 			},
 			expected: expectation{
 				value: "hello",
@@ -106,10 +110,14 @@ func TestNewPhotosServerListAlbums(t *testing.T) {
 			},
 		},
 		"getMedia": {
-			opts: []OptFunc{apiServiceOptFunc(DEFAULT_LIST_RESPONSE, &photos.MediaInfo{PageToken: "world"})},
-			test: func(ctx context.Context, c *photos.GooglePhotoServiceClient) (string, error) {
-				resp, err := (*c).GetAlbumMedia(ctx, &photos.FromAlbumRequest{})
-				return resp.PageToken, err
+			opts: []OptFunc{apiServiceOptFunc(DEFAULT_LIST_RESPONSE,
+				&photos.MediaInfo{
+					PageToken: &photos.PageTokens{
+						GoogleToken: &photos.GooglePageToken{
+							NextPageToken: "world"}}})},
+			test: func(ctx context.Context, c *photos.PhotoServiceClient) (string, error) {
+				resp, err := (*c).GetAlbumMedia(ctx, &photos.GetMediaRequest{})
+				return resp.PageToken.GetGoogleToken().GetNextPageToken(), err
 			},
 			expected: expectation{
 				value: "world",
