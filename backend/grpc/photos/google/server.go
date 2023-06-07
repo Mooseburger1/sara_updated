@@ -25,7 +25,7 @@ type photosServer struct {
 type Opts struct {
 	clientCreator google_oauth.ClientFunc
 	listener      net.Listener
-	server_api    proto_photo.GooglePhotoServiceServer
+	server_api    proto_photo.PhotoServiceServer
 }
 
 // An OptFunc is a function meant to modify an existing Opts struct with new configurations
@@ -72,7 +72,7 @@ func (ps *photosServer) initServer() {
 	ps.logger = logger
 	grpcServer := grpc.NewServer()
 
-	proto_photo.RegisterGooglePhotoServiceServer(grpcServer, ps.Opts.server_api)
+	proto_photo.RegisterPhotoServiceServer(grpcServer, ps.Opts.server_api)
 	ps.Server = grpcServer
 }
 
