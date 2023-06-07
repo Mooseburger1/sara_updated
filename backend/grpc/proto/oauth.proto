@@ -5,12 +5,38 @@ option go_package = "sara_updated/backend/grpc/proto/protoauth";
 import "google/protobuf/timestamp.proto";
 
 
-
+// Encapsulates all the rquired info needed for an app to make
+// a verified API call to remote services
 message OauthConfigInfo{
-    GoogleTokenInfo token_info = 1;
-    GoogleAppCredentials app_credentials = 2;
-    GoogleScoping app_scopes = 3;
+    TokenInfo token_info = 1;
+    AppCredentials app_credentials = 2;
+    Scoping app_scopes = 3;
     URL redirect_url = 4;
+}
+
+
+// Represents the different types of tokens exchanged during an Oauth
+// authentication process. There are many types of Oauth processes that
+// use their own types of tokens.
+message TokenInfo {
+    GoogleTokenInfo google_token = 1;
+}
+
+// Represents any credentials provided by a specific platform
+// When an app is registered with it for API services. For example
+// in order to make an app that can communicate with Google API
+// services, it must be registered in the API console on GCP.
+message AppCredentials {
+    GoogleAppCredentials google_app_credentials = 1;
+}
+
+// Represents the scope of capabilities and permissions an app has. Different
+// platforms regulate this in different ways. For example, to restrict an app
+// to only be able to Read data, but not write or delete, using Google APIs, the
+// app is provided specific "scope" strings at run time that must be provided
+// when making any API requests.
+message Scoping {
+    GoogleScoping google_scopes = 1;
 }
 
 // Represents the token returned by Google servers
