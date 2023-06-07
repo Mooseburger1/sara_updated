@@ -34,11 +34,11 @@ func (g *GPhotosAPI) ListAlbums(ctx context.Context,
 }
 
 // GetAlbumMedia is a RPC service endpoint. It receives a
-// FromAlbumRequest proto and returns a PhotosInfo proto. Internally
-// it makes an Oauth2 authorized rest request to the Google Photos API
-// server for listing photos from a specific album
+// GetMediaRequest proto and returns a MediaInfo proto. Internally
+// it makes an Oauth2 authorized REST request to the Google Photos API
+// server for listing photos from a specific album or directory.
 func (g *GPhotosAPI) GetAlbumMedia(ctx context.Context,
-	rpc *photos.FromAlbumRequest) (*photos.MediaInfo, error) {
+	rpc *photos.GetMediaRequest) (*photos.MediaInfo, error) {
 
 	//TODO
 	return nil, nil
