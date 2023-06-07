@@ -16,6 +16,8 @@ import (
 )
 
 const (
+	// Endpoint for Google photos REST API
+	// TODO - move constants like these to a central location for scalability/supportability
 	ALBUMS_ENDPOINT = "https://photoslibrary.googleapis.com/v1/albums"
 )
 
@@ -94,6 +96,9 @@ func (g *GPhotosAPI) GetAlbumMedia(ctx context.Context,
 	return nil, nil
 }
 
+// addQueryParams receives a pre-created http URL and appends
+// the appropriate URL query params required with respect to the to
+// the incoming RPC that triggered the api endpoint.
 func addQueryParams(req *http.Request, rpc *photos.AlbumListRequest) {
 	query := req.URL.Query()
 	query.Add("pageToken", rpc.GetPageToken())
