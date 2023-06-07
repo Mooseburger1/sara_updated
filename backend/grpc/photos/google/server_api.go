@@ -45,7 +45,7 @@ func (g *GPhotosAPI) ListAlbums(ctx context.Context,
 	client, err := g.clientCreator(rpc.GetOauthInfo())
 	if err != nil {
 		g.logger.Printf("Error creating oauth http client for grpc photos request: %v", err)
-		return nil, common.CreateClientCreationError(err).Err()
+		return nil, common.ClientCreationError()
 	}
 
 	req, err := http.NewRequest("GET", ALBUMS_ENDPOINT, nil)
@@ -65,11 +65,10 @@ func (g *GPhotosAPI) ListAlbums(ctx context.Context,
 	if resp.StatusCode != http.StatusOK {
 		g.logger.Printf("Call to List Albums returned status code %v, not %v", resp.StatusCode, http.StatusOK)
 		bodyBytes, err := io.ReadAll(resp.Body)
-
 		if err != nil {
 			panic(err)
 		}
-		return nil, common.CreateErrorResponseError(resp.StatusCode, bodyBytes).Err()
+		return nil, common.RpcErrorResponse(resp.StatusCode, string(bodyBytes)).Err()
 	}
 
 	respRpc := &photos.AlbumsInfo{}

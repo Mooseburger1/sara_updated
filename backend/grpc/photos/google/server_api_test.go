@@ -2,6 +2,7 @@ package photo_server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,8 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -27,15 +26,20 @@ type albumsExpectation struct {
 	err   error
 }
 
+type albumsHttpResponse struct {
+	value *http.Response
+	err   error
+}
+
 func createClientFunc(r *http.Response, c reqChecksFunc) common.ClientFunc {
 	return func(o *protoauth.OauthConfigInfo) (*http.Client, error) {
 
 		return &http.Client{
-			Transport: common.RoundTripFunc(func(req *http.Request) *http.Response {
+			Transport: common.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
 				if c != nil {
 					c(req)
 				}
-				return r
+				return r, nil
 			}),
 		}, nil
 	}
@@ -43,11 +47,12 @@ func createClientFunc(r *http.Response, c reqChecksFunc) common.ClientFunc {
 
 func TestListAlbums(t *testing.T) {
 	tests := map[string]struct {
-		in         *photos.AlbumListRequest
-		expected   albumsExpectation
-		resp       *http.Response
-		checks     reqChecksFunc
-		clientFunc testingClientFunc
+		in          *photos.AlbumListRequest
+		expected    albumsExpectation
+		resp        *http.Response
+		checks      reqChecksFunc
+		clientFunc  testingClientFunc
+		shouldPanic bool
 	}{
 		"NoQueryParams": {
 			in: DEFAULT_ALBUM_LIST_REQUEST,
@@ -86,7 +91,8 @@ func TestListAlbums(t *testing.T) {
 					t.Errorf("Expected Verb: %q\nActual: %q\n", "GET", req.Method)
 				}
 			},
-			clientFunc: nil},
+			clientFunc:  createClientFunc,
+			shouldPanic: false},
 		"QueryParams": {
 			in:       &photos.AlbumListRequest{PageSize: 10, PageToken: "Foo"},
 			expected: albumsExpectation{value: DEFAULT_ALBUM_LIST_RESPONSE, err: nil},
@@ -103,45 +109,88 @@ func TestListAlbums(t *testing.T) {
 					t.Errorf("Expected pageToken: %q\nActual: %q\n", "Foo", pageToken)
 				}
 			},
-			clientFunc: nil},
-		"ClientCreationError": {
+			clientFunc:  createClientFunc,
+			shouldPanic: false},
+		"ClientCreationErrorReturnsError": {
 			in:       DEFAULT_ALBUM_LIST_REQUEST,
-			expected: albumsExpectation{value: nil, err: common.CreateClientCreationError(fmt.Errorf("Unused")).Err()},
-			resp: &http.Response{
-				StatusCode: http.StatusOK,
-				Body:       ioutil.NopCloser(strings.NewReader(`{}`)),
-			},
-			checks: nil,
+			expected: albumsExpectation{value: nil, err: common.ClientCreationError()},
+			resp:     nil,
+			checks:   nil,
 			clientFunc: func(r *http.Response, c reqChecksFunc) common.ClientFunc {
 				return func(o *protoauth.OauthConfigInfo) (*http.Client, error) {
 
-					return nil, common.CreateClientCreationError(fmt.Errorf("Unused")).Err()
+					return nil, common.ClientCreationError()
 				}
-			}},
+			},
+			shouldPanic: false},
+		"ClientRequestErrorShouldPanic": {
+			in:       DEFAULT_ALBUM_LIST_REQUEST,
+			expected: albumsExpectation{value: nil, err: nil},
+			resp:     nil,
+			checks:   nil,
+			clientFunc: func(r *http.Response, c reqChecksFunc) common.ClientFunc {
+				return func(o *protoauth.OauthConfigInfo) (*http.Client, error) {
+
+					return &http.Client{
+						Transport: common.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
+
+							return nil, errors.New("Unused")
+						}),
+					}, nil
+				}
+			},
+			shouldPanic: true},
+		"Non200StatusReturnsError": {
+			in:       DEFAULT_ALBUM_LIST_REQUEST,
+			expected: albumsExpectation{value: nil, err: common.RpcErrorResponse(http.StatusBadRequest, string([]byte{34, 97, 108, 98, 117, 109, 115, 34, 58, 91, 93, 44})).Err()},
+			resp: &http.Response{
+				StatusCode: http.StatusBadRequest,
+				Body:       ioutil.NopCloser(strings.NewReader(string([]byte{34, 97, 108, 98, 117, 109, 115, 34, 58, 91, 93, 44}))),
+			},
+			checks:      nil,
+			clientFunc:  createClientFunc,
+			shouldPanic: false},
+		"MalFormedJsonShouldPanic": {
+			in:       DEFAULT_ALBUM_LIST_REQUEST,
+			expected: albumsExpectation{value: nil, err: nil},
+			resp: &http.Response{
+				StatusCode: http.StatusBadRequest,
+				Body:       ioutil.NopCloser(strings.NewReader(`"albums":[],`)),
+			},
+			checks:      nil,
+			clientFunc:  createClientFunc,
+			shouldPanic: true},
 	}
 
 	for scenario, tt := range tests {
-		var g *GPhotosAPI
+		t.Run(scenario, func(t *testing.T) {
+			defer func() {
+				r := recover()
 
-		ctx := context.Background()
+				if (r == nil) && (tt.shouldPanic) {
+					t.Errorf("%s should have panicked but did not!", scenario)
+				}
 
-		if clientCreator := tt.clientFunc; clientCreator != nil {
-			g = NewGPhotosApiStub(clientCreator(tt.resp, tt.checks))
-		} else {
-			g = NewGPhotosApiStub(createClientFunc(tt.resp, tt.checks))
-		}
+				if (r != nil) && (!tt.shouldPanic) {
+					t.Errorf("%s Test should not have panicked but did!", scenario)
+				}
+			}()
 
-		value, err := g.ListAlbums(ctx, tt.in)
+			var g *GPhotosAPI
 
-		if err != nil {
-			if cmp.Equal(err, tt.expected.err, cmpopts.EquateErrors()) {
-				t.Errorf("\nTest %s\nExpected error: %q\nActual error: %q", scenario, tt.expected.err, err)
+			ctx := context.Background()
+			g = NewGPhotosApiStub(tt.clientFunc(tt.resp, tt.checks))
+			value, err := g.ListAlbums(ctx, tt.in)
+
+			if err != nil {
+				if !strings.Contains(tt.expected.err.Error(), err.Error()) {
+					t.Errorf("\nTest %s\nExpected error: %v\nActual error: %v", scenario, tt.expected.err.Error(), err.Error())
+				}
 			}
 
-		}
-
-		if !proto.Equal(value, tt.expected.value) {
-			t.Errorf("\nTest %s\nExpected: %q\nActual: %q\n", scenario, tt.expected.value, value)
-		}
+			if !proto.Equal(value, tt.expected.value) {
+				t.Errorf("\nTest %s\nExpected: %q\nActual: %q\n", scenario, tt.expected.value, value)
+			}
+		})
 	}
 }
