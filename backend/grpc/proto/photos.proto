@@ -30,74 +30,59 @@ message GooglePhotosAlbumsRequest {
 // Gets media from a specific album for a specific photo host {i.e. google photos, dropbox, s3}
 message GetMediaRequest {
     GooglePhotosMediaRequest google_request = 1;
-    OauthConfigInfo oauth_info = 2;
 }
 
 // Conforms to the REST API request to list all media associated with a particular Google
-// Photos album. See https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search
+// Photos album. 
+// See https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search
 message GooglePhotosMediaRequest {
     string album_id = 1;
-    string page_size = 2;
-    int32 page_token = 3;
+    int32 page_size = 2;
+    string page_token = 3;
 }
 
-// Contains all metadata associated with a particular album
-message AlbumInfo {
-    oneof photos_platform {
-        GoogleAlbumInfo google_album = 1;
-    }
-
-    // Conforms to the JSON response of the Google Photos API for listing albums
-    // See https://developers.google.com/photos/library/reference/rest/v1/albums/list
-    message GoogleAlbumInfo {
-        string id = 1;
-        string title = 2;
-        string product_url = 3;
-        int32 media_items_count = 4;
-        string cover_photo_base_url = 5;
-        string cover_photo_media_item_id = 6;
-    }
-}
-
-// Contains zero or more albums from a photos platform
+// Contains zero or more albums from the various supported photos platform
 message AlbumsInfo {
-    repeated AlbumInfo albums = 1;
-    PageTokens page_tokens = 2;
+    GooglePhotosAlbums google_photos_albums = 1;
 }
 
-// Contains all "next page tokens" from any REST request that returned partial results.
-// Explicitly separating platforms for nomenclature and ease of JSON Unmarshaling when
-// Unmarshaling a response from a platform into a protobuf
-message PageTokens{
-    GooglePageToken google_token = 1;
+// Conforms to the JSON response of the Google Photos API for listing albums
+// See https://developers.google.com/photos/library/reference/rest/v1/albums/list
+message GooglePhotosAlbums {
+    repeated GoogleAlbumInfo albums = 1;
+    string next_page_token = 2;
 }
 
-// Field member of "next_page_token" conforms to the JSON response from Google Photos
-// REST API
-message GooglePageToken {
-    string next_page_token = 1;
+// Conforms to the JSON response of the Google Photos API for representing a single album
+// and its metadata.
+// See https://developers.google.com/photos/library/reference/rest/v1/albums/list
+message GoogleAlbumInfo {
+    string id = 1;
+    string title = 2;
+    string product_url = 3;
+    int32 media_items_count = 4;
+    string cover_photo_base_url = 5;
+    string cover_photo_media_item_id = 6;
 }
 
 // Contains all media info returned from a media retrieval request
 message MediaInfo {
-    repeated Media media_items = 1;
-    PageTokens page_token = 2;
-}
-
-// Explicitly separating platforms for nomenclature and ease of JSON Unmarshaling when
-// Unmarshaling a response from a platform into a protobuf.
-message Media {
-    oneof photos_platform {
-        GoogleMedia google_media = 1;
-    }
+    GooglePhotosMediaInfo google_media_info = 1;
 }
 
 // Conforms to the JSON response of Google Photos API for listing and/or retrieving
 // media from the platform.
 // See https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search
-message GoogleMedia {
+message GooglePhotosMediaInfo {
+    repeated Media media_items = 1;
+    string next_page_token = 2;
+}
+
+// Conforms to the JSON response of Google Photos API for a single media item and its metadata
+// See https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search
+message Media {
     string id = 1;
     string product_url = 2;
     string mime_type = 3;
-    
+    string description = 4;
 }
