@@ -16,7 +16,7 @@ import (
 )
 
 var DEFAULT_ALBUM_LIST_REQUEST = &photos.AlbumListRequest{}
-var DEFAULT_ALBUM_LIST_RESPONSE = &photos.AlbumsInfo{}
+var DEFAULT_ALBUM_LIST_RESPONSE = &photos.AlbumsInfo{GooglePhotosAlbums: &photos.GooglePhotosAlbums{}}
 
 type reqChecksFunc func(req *http.Request)
 type testingClientFunc func(r *http.Response, c reqChecksFunc) common.ClientFunc
@@ -57,16 +57,15 @@ func TestListAlbums(t *testing.T) {
 		"NoQueryParams": {
 			in: DEFAULT_ALBUM_LIST_REQUEST,
 			expected: albumsExpectation{value: &photos.AlbumsInfo{
-				Albums: []*photos.AlbumInfo{
-					{
-						PhotosPlatform: &photos.AlbumInfo_GoogleAlbum{
-							GoogleAlbum: &photos.AlbumInfo_GoogleAlbumInfo{
-								Id:                    "foo",
-								Title:                 "bar",
-								ProductUrl:            "baz",
-								MediaItemsCount:       200,
-								CoverPhotoBaseUrl:     "someUrl",
-								CoverPhotoMediaItemId: "someOtherUrl"}}}}},
+				GooglePhotosAlbums: &photos.GooglePhotosAlbums{
+					Albums: []*photos.GoogleAlbumInfo{
+						{
+							Id:                    "foo",
+							Title:                 "bar",
+							ProductUrl:            "baz",
+							MediaItemsCount:       200,
+							CoverPhotoBaseUrl:     "someUrl",
+							CoverPhotoMediaItemId: "someOtherUrl"}}}},
 				err: nil},
 			resp: &http.Response{
 				StatusCode: http.StatusOK,
