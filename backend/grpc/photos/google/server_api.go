@@ -73,16 +73,16 @@ func (g *GPhotosAPI) ListAlbums(ctx context.Context,
 		return nil, common.RpcErrorResponse(resp.StatusCode, string(bodyBytes)).Err()
 	}
 
-	respRpc := &photos.AlbumsInfo{}
+	r := &photos.GooglePhotosAlbums{}
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
 	}
-	err = protojson.Unmarshal(bytes, respRpc)
+	err = protojson.Unmarshal(bytes, r)
 	if err != nil {
 		panic(err)
 	}
-	return respRpc, nil
+	return &photos.AlbumsInfo{GooglePhotosAlbums: r}, nil
 }
 
 // GetAlbumMedia is a RPC service endpoint. It receives a
