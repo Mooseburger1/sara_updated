@@ -101,7 +101,7 @@ func (g *GPhotosAPI) GetAlbumMedia(ctx context.Context,
 // the incoming RPC that triggered the api endpoint.
 func addQueryParams(req *http.Request, rpc *photos.AlbumListRequest) {
 	query := req.URL.Query()
-	query.Add("pageToken", rpc.GetPageToken())
-	query.Add("pageSize", strconv.Itoa(int(rpc.GetPageSize())))
+	query.Add("pageToken", rpc.GetGoogleRequest().GetPageToken())
+	query.Add("pageSize", strconv.Itoa(int(rpc.GetGoogleRequest().GetPageSize())))
 	req.URL.RawQuery = query.Encode()
 }
