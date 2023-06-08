@@ -96,13 +96,14 @@ func TestNewPhotosServerListAlbums(t *testing.T) {
 	}{
 		"listAlbums": {
 			opts: []OptFunc{apiServiceOptFunc(&photos.AlbumsInfo{
-				PageTokens: &photos.PageTokens{
-					GoogleToken: &photos.GooglePageToken{
-						NextPageToken: "hello"}}},
+				GooglePhotosAlbums: &photos.GooglePhotosAlbums{
+					NextPageToken: "hello",
+				},
+			},
 				DEFAULT_MEDIA_RESPONSE)},
 			test: func(ctx context.Context, c *photos.PhotoServiceClient) (string, error) {
 				resp, err := (*c).ListAlbums(ctx, &photos.AlbumListRequest{})
-				return resp.GetPageTokens().GoogleToken.GetNextPageToken(), err
+				return resp.GetGooglePhotosAlbums().GetNextPageToken(), err
 			},
 			expected: expectation{
 				value: "hello",
@@ -112,12 +113,11 @@ func TestNewPhotosServerListAlbums(t *testing.T) {
 		"getMedia": {
 			opts: []OptFunc{apiServiceOptFunc(DEFAULT_LIST_RESPONSE,
 				&photos.MediaInfo{
-					PageToken: &photos.PageTokens{
-						GoogleToken: &photos.GooglePageToken{
-							NextPageToken: "world"}}})},
+					GoogleMediaInfo: &photos.GooglePhotosMediaInfo{
+						NextPageToken: "world"}})},
 			test: func(ctx context.Context, c *photos.PhotoServiceClient) (string, error) {
 				resp, err := (*c).GetAlbumMedia(ctx, &photos.GetMediaRequest{})
-				return resp.PageToken.GetGoogleToken().GetNextPageToken(), err
+				return resp.GetGoogleMediaInfo().GetNextPageToken(), err
 			},
 			expected: expectation{
 				value: "world",
