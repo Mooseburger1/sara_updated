@@ -96,6 +96,63 @@ func TestListAlbums(t *testing.T) {
 			},
 			clientFunc:  createClientFunc,
 			shouldPanic: false},
+		"MultipleAlbums": {
+			in: DEFAULT_ALBUM_LIST_REQUEST,
+			expected: albumsExpectation{value: &photos.AlbumsInfo{
+				GooglePhotosAlbums: &photos.GooglePhotosAlbums{
+					Albums: []*photos.GoogleAlbumInfo{
+						{
+							Id:                    "foo",
+							Title:                 "bar",
+							ProductUrl:            "baz",
+							MediaItemsCount:       200,
+							CoverPhotoBaseUrl:     "someUrl",
+							CoverPhotoMediaItemId: "someOtherUrl"},
+						{
+							Id:                    "abc",
+							Title:                 "def",
+							ProductUrl:            "ghi",
+							MediaItemsCount:       -100,
+							CoverPhotoBaseUrl:     "sparta.com",
+							CoverPhotoMediaItemId: "answer.to.life.is.42"}}}},
+				err: nil},
+			resp: &http.Response{
+				StatusCode: http.StatusOK,
+				Body: ioutil.NopCloser(strings.NewReader(`{
+					"albums": [
+					  {
+						"id": "foo",
+						"title": "bar",
+						"productUrl": "baz",
+						"mediaItemsCount": "200",
+						"coverPhotoBaseUrl": "someUrl",
+						"coverPhotoMediaItemId": "someOtherUrl"
+					  },
+					  {
+						"id": "abc",
+						"title": "def",
+						"productUrl": "ghi",
+						"mediaItemsCount": "-100",
+						"coverPhotoBaseUrl": "sparta.com",
+						"coverPhotoMediaItemId": "answer.to.life.is.42"
+					  }
+					]
+				  }`)),
+			},
+			checks: func(req *http.Request) {
+				host := req.Host
+				path := req.URL.Path
+				url := fmt.Sprintf("https://%s%s", host, path)
+				if url != ALBUMS_ENDPOINT {
+					t.Errorf("Expected URL: %q\nActual: %q\n", ALBUMS_ENDPOINT, url)
+				}
+
+				if req.Method != "GET" {
+					t.Errorf("Expected Verb: %q\nActual: %q\n", "GET", req.Method)
+				}
+			},
+			clientFunc:  createClientFunc,
+			shouldPanic: false},
 		"QueryParams": {
 			in: &photos.AlbumListRequest{
 				GoogleRequest: &photos.GooglePhotosAlbumsRequest{
