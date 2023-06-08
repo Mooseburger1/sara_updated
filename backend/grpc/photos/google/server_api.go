@@ -76,10 +76,12 @@ func (g *GPhotosAPI) ListAlbums(ctx context.Context,
 	respRpc := &photos.AlbumsInfo{}
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		g.logger.Printf("%s", err)
 		panic(err)
 	}
 	err = protojson.Unmarshal(bytes, respRpc)
 	if err != nil {
+		g.logger.Printf("%s", err)
 		panic(err)
 	}
 	return respRpc, nil

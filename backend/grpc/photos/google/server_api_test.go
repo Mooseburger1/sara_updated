@@ -56,13 +56,17 @@ func TestListAlbums(t *testing.T) {
 	}{
 		"NoQueryParams": {
 			in: DEFAULT_ALBUM_LIST_REQUEST,
-			expected: albumsExpectation{value: &photos.AlbumsInfo{Albums: []*photos.AlbumInfo{{
-				Id:                    "foo",
-				Title:                 "bar",
-				ProductUrl:            "baz",
-				MediaItemsCount:       200,
-				CoverPhotoBaseUrl:     "someUrl",
-				CoverPhotoMediaItemId: "someOtherUrl"}}},
+			expected: albumsExpectation{value: &photos.AlbumsInfo{
+				Albums: []*photos.AlbumInfo{
+					{
+						PhotosPlatform: &photos.AlbumInfo_GoogleAlbum{
+							GoogleAlbum: &photos.AlbumInfo_GoogleAlbumInfo{
+								Id:                    "foo",
+								Title:                 "bar",
+								ProductUrl:            "baz",
+								MediaItemsCount:       200,
+								CoverPhotoBaseUrl:     "someUrl",
+								CoverPhotoMediaItemId: "someOtherUrl"}}}}},
 				err: nil},
 			resp: &http.Response{
 				StatusCode: http.StatusOK,
@@ -94,7 +98,9 @@ func TestListAlbums(t *testing.T) {
 			clientFunc:  createClientFunc,
 			shouldPanic: false},
 		"QueryParams": {
-			in:       &photos.AlbumListRequest{PageSize: 10, PageToken: "Foo"},
+			in: &photos.AlbumListRequest{
+				GoogleRequest: &photos.GooglePhotosAlbumsRequest{
+					PageSize: 10, PageToken: "Foo"}},
 			expected: albumsExpectation{value: DEFAULT_ALBUM_LIST_RESPONSE, err: nil},
 			resp: &http.Response{
 				StatusCode: http.StatusOK,
@@ -154,7 +160,7 @@ func TestListAlbums(t *testing.T) {
 			in:       DEFAULT_ALBUM_LIST_REQUEST,
 			expected: albumsExpectation{value: nil, err: nil},
 			resp: &http.Response{
-				StatusCode: http.StatusBadRequest,
+				StatusCode: http.StatusOK,
 				Body:       ioutil.NopCloser(strings.NewReader(`"albums":[],`)),
 			},
 			checks:      nil,
