@@ -1,0 +1,12 @@
+version: '3'
+services:
+  grpc-backend:
+    image: 'grpc_backend'
+    container_name: 'grpc_backend'
+    stdin_open: true
+    tty: true
+    ports:
+      - "4000:4000"
+    build:
+      context: .
+      dockerfile: ./Dockerfile.grpc
