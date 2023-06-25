@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"time"
 
+	photos "sara_updated/backend/rest/photos_service"
+
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -15,8 +17,8 @@ import (
 func main() {
 	logger := log.New(os.Stdout, "server-manager", log.LstdFlags)
 
-	ps := NewPhotoService()
-	defer ps.InitServiceAndReturnCloseFunc()()
+	ps, closer := photos.NewPhotoService()
+	defer closer()
 
 	//Serve Mux to replace the default ServeMux
 	serveMux := mux.NewRouter()
