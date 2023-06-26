@@ -1,7 +1,6 @@
 package photos_service
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -9,7 +8,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -19,19 +17,19 @@ type OptFunc func(*Opts)
 
 // Opts persists all options set for the photos REST service
 type Opts struct {
-	service        string
-	port           int16
-	creds          credentials.TransportCredentials
-	listAlbumsFunc http.HandlerFunc
+	ConnFunc       func() (*grpc.ClientConn, error)
+	ListAlbumsFunc http.HandlerFunc
 }
 
 func defaultOpts() Opts {
 	return Opts{
-		service:        "grpc_backend",
-		port:           4000,
-		creds:          insecure.NewCredentials(),
-		listAlbumsFunc: listAlbums,
+		ConnFunc:       defaultConnFunc,
+		ListAlbumsFunc: listAlbums,
 	}
+}
+
+func defaultConnFunc() (*grpc.ClientConn, error) {
+	return grpc.Dial("grpc_backend:4000", grpc.WithTransportCredentials(insecure.NewCredentials()))
 }
 
 type photoService struct {
@@ -53,7 +51,7 @@ func NewPhotoService(opts ...OptFunc) (*photoService, func()) {
 		Opts: o,
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", o.service, o.port), grpc.WithTransportCredentials(o.creds))
+	conn, err := o.ConnFunc()
 	if err != nil {
 		panic(err)
 	}
