@@ -1,12 +1,13 @@
 package photos_service
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"sara_updated/backend/grpc/proto/photos"
 	protos "sara_updated/backend/grpc/proto/photos"
 
-	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -23,8 +24,7 @@ type Opts struct {
 
 func defaultOpts() Opts {
 	return Opts{
-		ConnFunc:       defaultConnFunc,
-		ListAlbumsFunc: listAlbums,
+		ConnFunc: defaultConnFunc,
 	}
 }
 
@@ -32,7 +32,7 @@ func defaultConnFunc() (*grpc.ClientConn, error) {
 	return grpc.Dial("grpc_backend:4000", grpc.WithTransportCredentials(insecure.NewCredentials()))
 }
 
-type photoService struct {
+type photosClient struct {
 	Opts
 	pc protos.PhotoServiceClient
 }
@@ -40,14 +40,14 @@ type photoService struct {
 // NewPhotoService intializes any connections to backend services while creating any
 // needed dependencies. It returns a photoService object and a function to be deferred
 // on in order to close any open connections and clean up and resources as necessary
-func NewPhotoService(opts ...OptFunc) (*photoService, func()) {
+func NewPhotosClient(opts ...OptFunc) (*photosClient, func()) {
 	o := defaultOpts()
 
 	for _, fn := range opts {
 		fn(&o)
 	}
 
-	ps := &photoService{
+	ps := &photosClient{
 		Opts: o,
 	}
 
@@ -61,11 +61,6 @@ func NewPhotoService(opts ...OptFunc) (*photoService, func()) {
 	return ps, func() { conn.Close() }
 }
 
-func (ps *photoService) RegisterGetRoutes(getRouter *mux.Router) {
-	//route for listing albums - optional params {pageSize | pageToken}
-	getRouter.HandleFunc("/photos/albums/list", listAlbums)
-}
-
-func listAlbums(w http.ResponseWriter, r *http.Request) {
-	//TODO
+func (p *photosClient) ListAlbums(ctx context.Context, ar *photos.AlbumListRequest) (*photos.AlbumsInfo, error) {
+	return p.pc.ListAlbums(ctx, ar)
 }
