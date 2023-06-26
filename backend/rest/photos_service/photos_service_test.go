@@ -10,6 +10,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 )
 
 type mockPhotosServer struct {
@@ -56,7 +57,7 @@ func dialer(m *mockPhotosServer) func(context.Context, string) (net.Conn, error)
 }
 
 type expectation struct {
-	value photos.AlbumsInfo
+	value *photos.AlbumsInfo
 	err   error
 }
 
@@ -66,7 +67,7 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 	}{
 		"validResponse": {
 			expectation{
-				value: photos.AlbumsInfo{},
+				value: &photos.AlbumsInfo{GooglePhotosAlbums: &photos.GooglePhotosAlbums{NextPageToken: "hello world"}},
 				err:   nil,
 			},
 		},
@@ -82,7 +83,7 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 	oFunc := makeConnOptFunc(conn)
 
 	for scenario, tt := range tests {
-		m.UpdateResponse(func() (*photos.AlbumsInfo, error) { return &tt.e.value, tt.e.err })
+		m.UpdateResponse(func() (*photos.AlbumsInfo, error) { return tt.e.value, tt.e.err })
 		t.Run(scenario, func(t *testing.T) {
 			client, _ := NewPhotosClient(oFunc)
 
@@ -92,8 +93,8 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 				t.Error("error: expected", tt.e.err, "received", err)
 			}
 
-			if tt.e.value != *response {
-				t.Errorf("\nTest %s \n Expected: %q\nActual: %q\n", scenario, &tt.e.value, response)
+			if !proto.Equal(tt.e.value, response) {
+				t.Errorf("\nTest %s \n Expected: %q\nActual: %q\n", scenario, tt.e.value, response)
 			}
 		})
 	}
