@@ -6,6 +6,8 @@ import (
 	"log"
 	"net"
 	"sara_updated/backend/grpc/proto/photos"
+	"sara_updated/backend/grpc/proto/protoauth"
+	"sara_updated/backend/rest/service"
 	"testing"
 
 	"google.golang.org/grpc"
@@ -13,17 +15,19 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// TODO - SET QUERY PARAMS IN MOCKPHOTO SERVER FOR VALIDATION!
+
 type mockPhotosServer struct {
 	photos.UnimplementedPhotoServiceServer
-	listAlbumsReponse func() (*photos.AlbumsInfo, error)
+	listAlbumsReponse func(*photos.AlbumListRequest) (*photos.AlbumsInfo, error)
 }
 
-func (m *mockPhotosServer) UpdateResponse(f func() (*photos.AlbumsInfo, error)) {
+func (m *mockPhotosServer) UpdateResponse(f func(*photos.AlbumListRequest) (*photos.AlbumsInfo, error)) {
 	m.listAlbumsReponse = f
 }
 
 func (m *mockPhotosServer) ListAlbums(ctx context.Context, a *photos.AlbumListRequest) (*photos.AlbumsInfo, error) {
-	return m.listAlbumsReponse()
+	return m.listAlbumsReponse(a)
 }
 
 func (m *mockPhotosServer) GetAlbumMedia(ctx context.Context, g *photos.GetMediaRequest) (*photos.MediaInfo, error) {
@@ -63,12 +67,28 @@ type expectation struct {
 
 func TestPhotosClient_listAlbums(t *testing.T) {
 	tests := map[string]struct {
-		e expectation
+		ctx context.Context
+		e   expectation
 	}{
 		"validResponse": {
+			context.Background(),
 			expectation{
 				value: &photos.AlbumsInfo{GooglePhotosAlbums: &photos.GooglePhotosAlbums{NextPageToken: "hello world"}},
 				err:   nil,
+			},
+		},
+		"returnsError": {
+			context.Background(),
+			expectation{
+				value: nil,
+				err:   errors.New("Failure"),
+			},
+		},
+		"pageSizeQueryParam": {
+			context.WithValue(context.Background(), "queryParams", service.QueryParams{PageSize: 3}),
+			expectation{
+				value: nil,
+				err:   errors.New("Failure"),
 			},
 		},
 	}
@@ -83,14 +103,15 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 	oFunc := makeConnOptFunc(conn)
 
 	for scenario, tt := range tests {
-		m.UpdateResponse(func() (*photos.AlbumsInfo, error) { return tt.e.value, tt.e.err })
+		m.UpdateResponse(func(*photos.AlbumListRequest) (*photos.AlbumsInfo, error) { return tt.e.value, tt.e.err })
 		t.Run(scenario, func(t *testing.T) {
 			client, _ := NewPhotosClient(oFunc)
 
-			response, err := client.ListAlbums(context.Background(), &photos.AlbumListRequest{})
+			response, err := client.ListAlbums(tt.ctx, &protoauth.OauthConfigInfo{})
 
-			if (tt.e.err != nil) && !errors.Is(tt.e.err, err) {
-				t.Error("error: expected", tt.e.err, "received", err)
+			if (tt.e.err != nil) && (tt.e.err.Error() != grpc.ErrorDesc(err)) {
+				t.Error("error: expected", tt.e.err, "received", grpc.ErrorDesc(err))
+
 			}
 
 			if !proto.Equal(tt.e.value, response) {
