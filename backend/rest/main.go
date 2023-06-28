@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	photos_service "sara_updated/backend/rest/service/photos"
 	"time"
-
-	photos "sara_updated/backend/rest/photos_service"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -17,15 +16,16 @@ import (
 func main() {
 	logger := log.New(os.Stdout, "server-manager", log.LstdFlags)
 
-	ps, closer := photos.NewPhotoService()
-	defer closer()
+	var ps, photosConnCloser = photos_service.NewPhotosClient()
+	defer photosConnCloser()
+
+	var api = NewApiRouter(ps)
 
 	//Serve Mux to replace the default ServeMux
 	serveMux := mux.NewRouter()
-
 	getRouter := serveMux.Methods(http.MethodGet).Subrouter()
 
-	ps.RegisterGetRoutes(getRouter)
+	api.RegisterGetRoutes(getRouter)
 
 	ch := handlers.CORS(handlers.AllowedOrigins([]string{"*"}))
 
