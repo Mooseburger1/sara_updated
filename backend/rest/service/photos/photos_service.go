@@ -7,6 +7,8 @@ import (
 	"os"
 	"sara_updated/backend/grpc/proto/photos"
 	protos "sara_updated/backend/grpc/proto/photos"
+	"sara_updated/backend/grpc/proto/protoauth"
+	"sara_updated/backend/rest/service"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -37,7 +39,7 @@ type photosClient struct {
 	pc protos.PhotoServiceClient
 }
 
-// NewPhotoService intializes any connections to backend services while creating any
+// NewPhotoClient intializes any connections to backend services while creating any
 // needed dependencies. It returns a photoService object and a function to be deferred
 // on in order to close any open connections and clean up and resources as necessary
 func NewPhotosClient(opts ...OptFunc) (*photosClient, func()) {
@@ -61,6 +63,34 @@ func NewPhotosClient(opts ...OptFunc) (*photosClient, func()) {
 	return ps, func() { conn.Close() }
 }
 
-func (p *photosClient) ListAlbums(ctx context.Context, ar *photos.AlbumListRequest) (*photos.AlbumsInfo, error) {
-	return p.pc.ListAlbums(ctx, ar)
+func (p *photosClient) ListAlbums(ctx context.Context, auth *protoauth.OauthConfigInfo) (*photos.AlbumsInfo, error) {
+
+	qp, ok := extractQueryParams(ctx)
+
+	greq := &photos.GooglePhotosAlbumsRequest{}
+	if ok {
+		greq.PageSize = qp.PageSize
+		greq.PageToken = qp.PageToken
+	}
+
+	req := &photos.AlbumListRequest{
+		GoogleRequest: greq,
+		OauthInfo:     auth,
+	}
+
+	return p.pc.ListAlbums(ctx, req)
+}
+
+func extractQueryParams(ctx context.Context) (*service.QueryParams, bool) {
+	v := ctx.Value("queryParams")
+	if v == nil {
+		return nil, false
+	}
+
+	qp, ok := v.(*service.QueryParams)
+	if !ok {
+		panic("Recevied unexpected object in queryParams context")
+	}
+
+	return qp, true
 }
