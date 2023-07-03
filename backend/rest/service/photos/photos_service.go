@@ -2,10 +2,7 @@ package photos_service
 
 import (
 	"context"
-	"log"
 	"net/http"
-	"os"
-	"sara_updated/backend/grpc/proto/photos"
 	protos "sara_updated/backend/grpc/proto/photos"
 	"sara_updated/backend/grpc/proto/protoauth"
 	"sara_updated/backend/rest/service"
@@ -14,9 +11,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var logger = log.New(os.Stdout, "rest-server-photos", log.LstdFlags)
-
 type OptFunc func(*Opts)
+
+// Use this to set context params so as to avoid collisions
+type ContextKey string
 
 // Opts persists all options set for the photos REST service
 type Opts struct {
@@ -63,17 +61,17 @@ func NewPhotosClient(opts ...OptFunc) (*photosClient, func()) {
 	return ps, func() { conn.Close() }
 }
 
-func (p *photosClient) ListAlbums(ctx context.Context, auth *protoauth.OauthConfigInfo) (*photos.AlbumsInfo, error) {
+func (p *photosClient) ListAlbums(ctx context.Context, auth *protoauth.OauthConfigInfo) (*protos.AlbumsInfo, error) {
 
 	qp, ok := extractQueryParams(ctx)
 
-	greq := &photos.GooglePhotosAlbumsRequest{}
+	greq := &protos.GooglePhotosAlbumsRequest{}
 	if ok {
 		greq.PageSize = qp.PageSize
 		greq.PageToken = qp.PageToken
 	}
 
-	req := &photos.AlbumListRequest{
+	req := &protos.AlbumListRequest{
 		GoogleRequest: greq,
 		OauthInfo:     auth,
 	}
@@ -82,7 +80,7 @@ func (p *photosClient) ListAlbums(ctx context.Context, auth *protoauth.OauthConf
 }
 
 func extractQueryParams(ctx context.Context) (*service.QueryParams, bool) {
-	v := ctx.Value("queryParams")
+	v := ctx.Value(ContextKey("queryParams"))
 	if v == nil {
 		return nil, false
 	}

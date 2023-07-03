@@ -11,11 +11,11 @@ import (
 	"testing"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
 )
-
-// TODO - SET QUERY PARAMS IN MOCKPHOTO SERVER FOR VALIDATION!
 
 type mockPhotosServer struct {
 	photos.UnimplementedPhotoServiceServer
@@ -65,17 +65,58 @@ type expectation struct {
 	err   error
 }
 
+type paramsCheckFuncBuilder func(*testing.T) paramsCheckFunc
+type paramsCheckFunc func(*photos.AlbumListRequest)
+
+func noCheckFunc(t *testing.T) paramsCheckFunc { return func(a *photos.AlbumListRequest) {} }
+
 func TestPhotosClient_listAlbums(t *testing.T) {
 	tests := map[string]struct {
 		ctx context.Context
 		e   expectation
+		paramsCheckFuncBuilder
 	}{
-		"validResponse": {
+		"validResponseWithPageToken": {
 			context.Background(),
 			expectation{
 				value: &photos.AlbumsInfo{GooglePhotosAlbums: &photos.GooglePhotosAlbums{NextPageToken: "hello world"}},
 				err:   nil,
 			},
+			noCheckFunc,
+		},
+		"validResponseWithAlbumInfo": {
+			context.Background(),
+			expectation{
+				value: &photos.AlbumsInfo{GooglePhotosAlbums: &photos.GooglePhotosAlbums{Albums: []*photos.GoogleAlbumInfo{{
+					Id:                    "abc",
+					Title:                 "123",
+					ProductUrl:            "www.thisisatest.com",
+					MediaItemsCount:       int32(4),
+					CoverPhotoBaseUrl:     "somePhotoUrl",
+					CoverPhotoMediaItemId: "someMediaItem",
+				}}}},
+				err: nil,
+			},
+			noCheckFunc,
+		},
+		"validResponseWithMultipleAlbumInfo": {
+			context.Background(),
+			expectation{
+				value: &photos.AlbumsInfo{GooglePhotosAlbums: &photos.GooglePhotosAlbums{Albums: []*photos.GoogleAlbumInfo{{
+					Id:                    "album1",
+					Title:                 "children",
+					ProductUrl:            "www.thisisatest.com",
+					MediaItemsCount:       int32(4),
+					CoverPhotoBaseUrl:     "somePhotoUrl",
+					CoverPhotoMediaItemId: "someMediaItem",
+				}, {
+					Id:         "album2",
+					Title:      "family",
+					ProductUrl: "www.family.com",
+				}}}},
+				err: nil,
+			},
+			noCheckFunc,
 		},
 		"returnsError": {
 			context.Background(),
@@ -83,34 +124,59 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 				value: nil,
 				err:   errors.New("Failure"),
 			},
+			noCheckFunc,
 		},
 		"pageSizeQueryParam": {
-			context.WithValue(context.Background(), "queryParams", service.QueryParams{PageSize: 3}),
+			context.WithValue(context.Background(), ContextKey("queryParams"), &service.QueryParams{PageSize: 3}),
 			expectation{
 				value: nil,
 				err:   errors.New("Failure"),
+			},
+			func(t *testing.T) paramsCheckFunc {
+				return func(a *photos.AlbumListRequest) {
+					if a.GoogleRequest.PageSize != 3 {
+						t.Error("QueryParamsCheck: Expected 3\nActual: ", a.GoogleRequest.PageSize)
+					}
+				}
+			},
+		},
+		"pageTokenQueryParam": {
+			context.WithValue(context.Background(), ContextKey("queryParams"), &service.QueryParams{PageToken: "Sparta"}),
+			expectation{
+				value: nil,
+				err:   errors.New("Failure"),
+			},
+			func(t *testing.T) paramsCheckFunc {
+				return func(a *photos.AlbumListRequest) {
+					if a.GoogleRequest.PageToken != "Sparta" {
+						t.Error("QueryParamsCheck: Expected 3\nActual: ", a.GoogleRequest.PageToken)
+					}
+				}
 			},
 		},
 	}
 
 	m := &mockPhotosServer{}
-	conn, err := grpc.DialContext(context.Background(), "", grpc.WithInsecure(), grpc.WithContextDialer(dialer(m)))
-	defer conn.Close()
+	conn, err := grpc.DialContext(context.Background(), "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer(m)))
 	if err != nil {
 		panic(err)
 	}
+	defer conn.Close()
 
 	oFunc := makeConnOptFunc(conn)
 
 	for scenario, tt := range tests {
-		m.UpdateResponse(func(*photos.AlbumListRequest) (*photos.AlbumsInfo, error) { return tt.e.value, tt.e.err })
+		m.UpdateResponse(func(a *photos.AlbumListRequest) (*photos.AlbumsInfo, error) {
+			tt.paramsCheckFuncBuilder(t)(a)
+			return tt.e.value, tt.e.err
+		})
 		t.Run(scenario, func(t *testing.T) {
 			client, _ := NewPhotosClient(oFunc)
 
 			response, err := client.ListAlbums(tt.ctx, &protoauth.OauthConfigInfo{})
 
-			if (tt.e.err != nil) && (tt.e.err.Error() != grpc.ErrorDesc(err)) {
-				t.Error("error: expected", tt.e.err, "received", grpc.ErrorDesc(err))
+			if (tt.e.err != nil) && (tt.e.err.Error() != status.Convert(err).Message()) {
+				t.Error("error: expected", tt.e.err, "received", status.Convert(err).Message())
 
 			}
 
