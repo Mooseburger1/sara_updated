@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"net/http"
-	"sara_updated/backend/grpc/proto/photos"
+	protos "sara_updated/backend/grpc/proto/photos"
 	"sara_updated/backend/grpc/proto/protoauth"
 )
 
@@ -24,7 +24,7 @@ type QueryParams struct {
 // classified as a photos service. It exposes methods to list any and all albums
 // provided by the service.
 type PhotosService interface {
-	ListAlbums(context.Context, *protoauth.OauthConfigInfo) (*photos.AlbumsInfo, error)
+	ListAlbums(context.Context, *protoauth.OauthConfigInfo) (*protos.AlbumsInfo, error)
 }
 
 // AuthorizationService is reponsible for ensuring all API calls to provided services
