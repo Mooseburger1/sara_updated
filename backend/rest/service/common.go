@@ -19,6 +19,9 @@ type QueryParams struct {
 	PageToken string
 }
 
+// PhotoService defines the capabilities any service should have in order to be
+// classified as a photos service. It exposes methods to list any and all albums
+// provided by the service.
 type PhotosService interface {
 	ListAlbums(context.Context, *protoauth.OauthConfigInfo) (*protos.AlbumsInfo, error)
 }
