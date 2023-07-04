@@ -14,3 +14,6 @@ type QueryParams struct {
 type PhotosService interface {
 	ListAlbums(context.Context, *protoauth.OauthConfigInfo) (*protos.AlbumsInfo, error)
 }
+
+// Use this to set context params so as to avoid collisions
+type ContextKey string
