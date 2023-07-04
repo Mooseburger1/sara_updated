@@ -40,7 +40,7 @@ func (r *router) listAlbums(rpcHandler service.RpcAlbumsHandlerFunc) service.Oau
 		}
 
 		ctx := context.WithValue(context.Background(), service.ContextKey("queryParams"), qp)
-		r.ps.ListAlbums(ctx, o)
+		rpcHandler(ctx, o)
 	}
 
 }
