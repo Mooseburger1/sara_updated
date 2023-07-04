@@ -41,3 +41,6 @@ type AuthorizationService interface {
 type OauthHandlerFunc func(http.ResponseWriter, *http.Request, *protoauth.OauthConfigInfo)
 
 type RpcHandlerFunc func(context.Context, *protoauth.OauthConfigInfo)
+
+// Use this to set context params so as to avoid collisions
+type ContextKey string

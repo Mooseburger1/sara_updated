@@ -13,9 +13,6 @@ import (
 
 type OptFunc func(*Opts)
 
-// Use this to set context params so as to avoid collisions
-type ContextKey string
-
 // Opts persists all options set for the photos REST service
 type Opts struct {
 	ConnFunc       func() (*grpc.ClientConn, error)
@@ -80,7 +77,7 @@ func (p *photosClient) ListAlbums(ctx context.Context, auth *protoauth.OauthConf
 }
 
 func extractQueryParams(ctx context.Context) (*service.QueryParams, bool) {
-	v := ctx.Value(ContextKey("queryParams"))
+	v := ctx.Value(service.ContextKey("queryParams"))
 	if v == nil {
 		return nil, false
 	}
