@@ -6,6 +6,14 @@ import (
 	"sara_updated/backend/grpc/proto/protoauth"
 )
 
+// All accepted URL query params
+const (
+	PAGE_TOKEN = "pageToken"
+	PAGE_SIZE  = "pageSize"
+)
+
+// QueryParams is used to pass along any params extracted from API URL during
+// an API request. It is passed through the layers in the context of each call
 type QueryParams struct {
 	PageSize  int32
 	PageToken string
