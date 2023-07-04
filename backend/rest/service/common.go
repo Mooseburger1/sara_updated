@@ -30,7 +30,7 @@ type PhotosService interface {
 // AuthorizationService is reponsible for ensuring all API calls to provided services
 // has the proper credentials and permissions to do so.
 type AuthorizationService interface {
-	IsAuthorized()
+	IsAuthorized(OauthHandlerFunc) http.HandlerFunc
 	Authenticate()
 	RedirectCallback()
 }
@@ -40,7 +40,7 @@ type AuthorizationService interface {
 // OAuth middleware.
 type OauthHandlerFunc func(http.ResponseWriter, *http.Request, *protoauth.OauthConfigInfo)
 
-type RpcHandlerFunc func(context.Context, *protoauth.OauthConfigInfo)
+type RpcAlbumsHandlerFunc func(context.Context, *protoauth.OauthConfigInfo) (*protos.AlbumsInfo, error)
 
 // Use this to set context params so as to avoid collisions
 type ContextKey string

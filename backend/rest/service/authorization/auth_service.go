@@ -7,7 +7,11 @@ import (
 
 type AuthMiddleware struct{}
 
-func (a *AuthMiddleware) isAuthorized(service.OauthHandlerFunc) http.HandlerFunc
+func (a *AuthMiddleware) IsAuthorized(service.OauthHandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+	}
+}
 
 func (a *AuthMiddleware) Authenticate()
 

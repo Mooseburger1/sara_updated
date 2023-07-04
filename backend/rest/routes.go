@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"sara_updated/backend/common"
 	"sara_updated/backend/grpc/proto/protoauth"
@@ -19,16 +20,15 @@ func NewApiRouter(ps service.PhotosService, as service.AuthorizationService) *ro
 }
 
 func (r *router) RegisterGetRoutes(get *mux.Router) {
-	get.HandleFunc("/api/v1/ListAlbums", r.as.IsAuthorized(r.ps.ListAlbums))
+	get.HandleFunc("/api/v1/ListAlbums", r.as.IsAuthorized(r.listAlbums(r.ps.ListAlbums)))
 }
 
-func (r *router) listAlbums(rpcHandler service.RpcHandlerFunc) service.OauthHandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request, o *protoauth.OauthConfigInfo) {
-		pageToken := r.URL.Query().Get(service.PAGE_TOKEN)
-		pagesize := r.URL.Query().Get(service.PAGE_SIZE)
+func (r *router) listAlbums(rpcHandler service.RpcAlbumsHandlerFunc) service.OauthHandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request, o *protoauth.OauthConfigInfo) {
+		pageToken := req.URL.Query().Get(service.PAGE_TOKEN)
+		pagesize := req.URL.Query().Get(service.PAGE_SIZE)
 
-		var qp service.QueryParams
-
+		var qp *service.QueryParams
 		qp.PageToken = pageToken
 
 		if pagesize != "" {
@@ -38,6 +38,9 @@ func (r *router) listAlbums(rpcHandler service.RpcHandlerFunc) service.OauthHand
 			}
 			qp.PageSize = i
 		}
+
+		ctx := context.WithValue(context.Background(), service.ContextKey("queryParams"), qp)
+		r.ps.ListAlbums(ctx, o)
 	}
 
 }
