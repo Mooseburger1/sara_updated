@@ -20,10 +20,10 @@ func NewApiRouter(ps service.PhotosService, as service.AuthorizationService) *ro
 }
 
 func (r *router) RegisterGetRoutes(get *mux.Router) {
-	get.HandleFunc("/api/v1/ListAlbums", r.as.IsAuthorized(r.listAlbums(r.ps.ListAlbums)))
+	get.HandleFunc("/api/v1/ListAlbums", r.as.IsAuthorized(r.listAlbumsRouter(r.ps.ListAlbums)))
 }
 
-func (r *router) listAlbums(rpcHandler service.RpcAlbumsHandlerFunc) service.OauthHandlerFunc {
+func (r *router) listAlbumsRouter(rpcHandler service.RpcAlbumsHandlerFunc) service.OauthHandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request, o *protoauth.OauthConfigInfo) {
 		pageToken := req.URL.Query().Get(service.PAGE_TOKEN)
 		pagesize := req.URL.Query().Get(service.PAGE_SIZE)
