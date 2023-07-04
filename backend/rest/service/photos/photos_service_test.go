@@ -127,7 +127,7 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 			noCheckFunc,
 		},
 		"pageSizeQueryParam": {
-			context.WithValue(context.Background(), ContextKey("queryParams"), &service.QueryParams{PageSize: 3}),
+			context.WithValue(context.Background(), service.ContextKey("queryParams"), &service.QueryParams{PageSize: 3}),
 			expectation{
 				value: nil,
 				err:   errors.New("Failure"),
@@ -141,7 +141,7 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 			},
 		},
 		"pageTokenQueryParam": {
-			context.WithValue(context.Background(), ContextKey("queryParams"), &service.QueryParams{PageToken: "Sparta"}),
+			context.WithValue(context.Background(), service.ContextKey("queryParams"), &service.QueryParams{PageToken: "Sparta"}),
 			expectation{
 				value: nil,
 				err:   errors.New("Failure"),
