@@ -1,5 +1,23 @@
 version: '3'
 services:
+  redis-server:
+    image: 'redis'
+    stdin_open: true
+    tty: true
+
+  rest-backend:
+    image: 'rest_backend'
+    container_name: 'rest_backend'
+    depends_on:
+      - redis-server
+    stdin_open: true
+    tty: true
+    ports:
+      - "9090:9090"
+    build:
+        context: .
+        dockerfile: ./Dockerfile.rest
+
   grpc-backend:
     image: 'grpc_backend'
     container_name: 'grpc_backend'

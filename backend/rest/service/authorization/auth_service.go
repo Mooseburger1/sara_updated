@@ -7,18 +7,20 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-// TODO - Create NewAuthMiddleware function
-
 type AuthMiddleware struct {
-	store *sessions.Store
+	store sessions.Store
+}
+
+func NewAuthMiddleware(store sessions.Store) *AuthMiddleware {
+	return &AuthMiddleware{store: store}
 }
 
 func (a *AuthMiddleware) IsAuthorized(service.OauthHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		w.Write([]byte("All Good!"))
 	}
 }
 
-func (a *AuthMiddleware) Authenticate()
+func (a *AuthMiddleware) Authenticate() {}
 
-func (a *AuthMiddleware) RedirectCallback()
+func (a *AuthMiddleware) RedirectCallback() {}
