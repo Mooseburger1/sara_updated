@@ -24,7 +24,7 @@ type QueryParams struct {
 // classified as a photos service. It exposes methods to list any and all albums
 // provided by the service.
 type PhotosService interface {
-	ListAlbums(context.Context, *protoauth.OauthConfigInfo) (*protos.AlbumsInfo, error)
+	ListAlbums(context.Context) (*protos.AlbumsInfo, error)
 }
 
 // AuthorizationService is reponsible for ensuring all API calls to provided services
@@ -40,7 +40,8 @@ type AuthorizationService interface {
 // OAuth middleware.
 type OauthHandlerFunc func(http.ResponseWriter, *http.Request, *protoauth.OauthConfigInfo)
 
-type RpcAlbumsHandlerFunc func(context.Context, *protoauth.OauthConfigInfo) (*protos.AlbumsInfo, error)
+type RpcAlbumsHandlerFunc func(context.Context) (*protos.AlbumsInfo, error)
 
 // Use this to set context params so as to avoid collisions
 type ContextKey string
+var OAUTH_CONFIG_KEY = ContextKey("OAUTH_CONFIG_KEY")

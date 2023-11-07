@@ -6,13 +6,15 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	mw "sara_updated/backend/rest/middleware"
 	"sara_updated/backend/rest/service"
-	"sara_updated/backend/rest/service/authorization"
 	photos_service "sara_updated/backend/rest/service/photos"
 	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	"gopkg.in/boj/redistore.v1"
 )
 
@@ -22,9 +24,9 @@ func photoServiceOptFuncBuilder(ps service.PhotosService) OptFunc {
 	}
 }
 
-func authServiceOptFuncBuilder(as service.AuthorizationService) OptFunc {
+func authServiceOptFuncBuilder(as AuthMiddleWare) OptFunc {
 	return func(o *Opts) {
-		o.AuthService = as
+		o.Auth = as
 	}
 }
 
@@ -36,12 +38,23 @@ func main() {
 		panic(err)
 	}
 
-	as := authorization.NewAuthMiddleware(store)
+	// TODO - move the oauthconfig to a better spot
+	am := mw.NewAuthMiddleware(mw.WithSessionStore(store),
+		mw.WithOAuthConfig(&oauth2.Config{
+			ClientID:     os.Getenv("GOOGLE_API_ID"),
+			ClientSecret: os.Getenv("GOOGLE_API_SECRET"),
+			RedirectURL:  "http://localhost:9090/oauth-callback",
+			Scopes: []string{"https://www.googleapis.com/auth/photoslibrary.readonly",
+				"https://www.googleapis.com/auth/calendar.readonly",
+				"https://www.googleapis.com/auth/calendar.events.readonly",
+			},
+			Endpoint: google.Endpoint,
+		}))
 
 	ps, photosConnCloser := photos_service.NewPhotosClient()
 	defer photosConnCloser()
 
-	var api = NewApiRouter(photoServiceOptFuncBuilder(ps), authServiceOptFuncBuilder(as))
+	var api = NewApiRouter(photoServiceOptFuncBuilder(ps), authServiceOptFuncBuilder(am))
 
 	//Serve Mux to replace the default ServeMux
 	serveMux := mux.NewRouter()

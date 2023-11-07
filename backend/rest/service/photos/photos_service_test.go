@@ -77,7 +77,7 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 		paramsCheckFuncBuilder
 	}{
 		"validResponseWithPageToken": {
-			context.Background(),
+			context.WithValue(context.Background(), service.OAUTH_CONFIG_KEY, &protoauth.OauthConfigInfo{}),
 			expectation{
 				value: &photos.AlbumsInfo{GooglePhotosAlbums: &photos.GooglePhotosAlbums{NextPageToken: "hello world"}},
 				err:   nil,
@@ -85,7 +85,7 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 			noCheckFunc,
 		},
 		"validResponseWithAlbumInfo": {
-			context.Background(),
+			context.WithValue(context.Background(), service.OAUTH_CONFIG_KEY, &protoauth.OauthConfigInfo{}),
 			expectation{
 				value: &photos.AlbumsInfo{GooglePhotosAlbums: &photos.GooglePhotosAlbums{Albums: []*photos.GoogleAlbumInfo{{
 					Id:                    "abc",
@@ -100,7 +100,7 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 			noCheckFunc,
 		},
 		"validResponseWithMultipleAlbumInfo": {
-			context.Background(),
+			context.WithValue(context.Background(), service.OAUTH_CONFIG_KEY, &protoauth.OauthConfigInfo{}),
 			expectation{
 				value: &photos.AlbumsInfo{GooglePhotosAlbums: &photos.GooglePhotosAlbums{Albums: []*photos.GoogleAlbumInfo{{
 					Id:                    "album1",
@@ -119,7 +119,7 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 			noCheckFunc,
 		},
 		"returnsError": {
-			context.Background(),
+			context.WithValue(context.Background(), service.OAUTH_CONFIG_KEY, &protoauth.OauthConfigInfo{}),
 			expectation{
 				value: nil,
 				err:   errors.New("Failure"),
@@ -127,7 +127,7 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 			noCheckFunc,
 		},
 		"pageSizeQueryParam": {
-			context.WithValue(context.Background(), service.ContextKey("queryParams"), &service.QueryParams{PageSize: 3}),
+			context.WithValue(context.WithValue(context.Background(), service.OAUTH_CONFIG_KEY, &protoauth.OauthConfigInfo{}), service.ContextKey("queryParams"), &service.QueryParams{PageSize: 3}),
 			expectation{
 				value: nil,
 				err:   errors.New("Failure"),
@@ -141,7 +141,7 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 			},
 		},
 		"pageTokenQueryParam": {
-			context.WithValue(context.Background(), service.ContextKey("queryParams"), &service.QueryParams{PageToken: "Sparta"}),
+			context.WithValue(context.WithValue(context.Background(), service.OAUTH_CONFIG_KEY, &protoauth.OauthConfigInfo{}), service.ContextKey("queryParams"), &service.QueryParams{PageToken: "Sparta"}),
 			expectation{
 				value: nil,
 				err:   errors.New("Failure"),
@@ -173,7 +173,7 @@ func TestPhotosClient_listAlbums(t *testing.T) {
 		t.Run(scenario, func(t *testing.T) {
 			client, _ := NewPhotosClient(oFunc)
 
-			response, err := client.ListAlbums(tt.ctx, &protoauth.OauthConfigInfo{})
+			response, err := client.ListAlbums(tt.ctx)
 
 			if (tt.e.err != nil) && (tt.e.err.Error() != status.Convert(err).Message()) {
 				t.Error("error: expected", tt.e.err, "received", status.Convert(err).Message())

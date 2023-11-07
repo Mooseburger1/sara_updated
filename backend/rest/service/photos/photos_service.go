@@ -58,8 +58,11 @@ func NewPhotosClient(opts ...OptFunc) (*photosClient, func()) {
 	return ps, func() { conn.Close() }
 }
 
-func (p *photosClient) ListAlbums(ctx context.Context, auth *protoauth.OauthConfigInfo) (*protos.AlbumsInfo, error) {
-
+func (p *photosClient) ListAlbums(ctx context.Context) (*protos.AlbumsInfo, error) {
+	oa, ok := ctx.Value(service.OAUTH_CONFIG_KEY).(*protoauth.OauthConfigInfo)
+	if !ok {
+		panic("could not extract OauthConfig")
+	}
 	qp, ok := extractQueryParams(ctx)
 
 	greq := &protos.GooglePhotosAlbumsRequest{}
@@ -70,7 +73,7 @@ func (p *photosClient) ListAlbums(ctx context.Context, auth *protoauth.OauthConf
 
 	req := &protos.AlbumListRequest{
 		GoogleRequest: greq,
-		OauthInfo:     auth,
+		OauthInfo:     oa,
 	}
 
 	return p.pc.ListAlbums(ctx, req)

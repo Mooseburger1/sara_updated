@@ -4,11 +4,14 @@ import (
 	"context"
 	"net/http"
 	"sara_updated/backend/common"
-	"sara_updated/backend/grpc/proto/protoauth"
 	"sara_updated/backend/rest/service"
 
 	"github.com/gorilla/mux"
 )
+
+type AuthMiddleWare interface {
+	EnsureAuthorized(http.Handler) http.Handler
+}
 
 // router registers and maintains all API endpoints for the publicly exposed URLs.
 type router struct {
@@ -19,7 +22,7 @@ type router struct {
 // use to fulfill requests
 type Opts struct {
 	PhotoService service.PhotosService
-	AuthService  service.AuthorizationService
+	Auth         AuthMiddleWare
 }
 
 // defaultOpts creates the default services the router will use if no Opts configurations are provided
@@ -52,11 +55,13 @@ func NewApiRouter(opts ...OptFunc) *router {
 // RegisterGetRoutes expectes a GET mux subrouter. It utilizes the subrouter to handled all incoming
 // GET requests for the specified routes.
 func (r *router) RegisterGetRoutes(get *mux.Router) {
-	get.HandleFunc("/api/v1/ListAlbums", r.Opts.AuthService.IsAuthorized(r.listAlbumsRouter(r.Opts.PhotoService.ListAlbums)))
+	// Register the auth Middleware
+	get.Use(r.Opts.Auth.EnsureAuthorized)
+	get.HandleFunc("/api/v1/ListAlbums", r.listAlbumsRouter(r.Opts.PhotoService.ListAlbums))
 }
 
-func (r *router) listAlbumsRouter(rpcHandler service.RpcAlbumsHandlerFunc) service.OauthHandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request, o *protoauth.OauthConfigInfo) {
+func (r *router) listAlbumsRouter(rpcHandler service.RpcAlbumsHandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
 		pageToken := req.URL.Query().Get(service.PAGE_TOKEN)
 		pagesize := req.URL.Query().Get(service.PAGE_SIZE)
 
@@ -71,8 +76,8 @@ func (r *router) listAlbumsRouter(rpcHandler service.RpcAlbumsHandlerFunc) servi
 			qp.PageSize = i
 		}
 
-		ctx := context.WithValue(context.Background(), service.ContextKey("queryParams"), qp)
-		rpcHandler(ctx, o)
+		ctx := context.WithValue(req.Context(), service.ContextKey("queryParams"), qp)
+		rpcHandler(ctx)
 	}
 
 }
