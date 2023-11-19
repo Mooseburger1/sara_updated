@@ -11,6 +11,7 @@ import (
 
 type AuthMiddleWare interface {
 	EnsureAuthorized(http.Handler) http.Handler
+	GoogleRedirectCallback(http.ResponseWriter, *http.Request)
 }
 
 // router registers and maintains all API endpoints for the publicly exposed URLs.

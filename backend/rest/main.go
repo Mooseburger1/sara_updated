@@ -58,6 +58,8 @@ func main() {
 
 	//Serve Mux to replace the default ServeMux
 	serveMux := mux.NewRouter()
+	serveMux.HandleFunc("/oauth-callback", am.GoogleRedirectCallback)
+
 	getRouter := serveMux.Methods(http.MethodGet).Subrouter()
 
 	api.RegisterGetRoutes(getRouter)

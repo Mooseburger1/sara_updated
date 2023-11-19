@@ -56,4 +56,18 @@ func TestEnsureAuthorizedNoTokenRedirectsToOauth(t *testing.T) {
 
 }
 
+func TestGoogleRedirectCallbackNoCodeWritesError(t *testing.T) {
+	expected := "Code not found to provide AccessToken: "
+
+	req := httptest.NewRequest(http.MethodPost, "http://testing", nil)
+	rw := httptest.NewRecorder()
+
+	underTest := getAuthMiddleWare(&mockSessionStore{}, &oauth2.Config{})
+	underTest.GoogleRedirectCallback(rw, req)
+
+	if rw.Body.String() != expected {
+		t.Errorf("Expected response to have body of %s but was %s", expected, rw.Body.String())
+	}
+}
+
 // TODO - TEST THE REST OF THE LOGIC

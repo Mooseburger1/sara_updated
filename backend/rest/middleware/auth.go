@@ -18,11 +18,12 @@ import (
 type OptFunc func(*Opts)
 
 const (
-	UNIQUE_SESSION_IDENTIFIER = "session-id"
+	UNIQUE_SESSION_IDENTIFIER = "session_id"
 	ACCESS_TOKEN_KEY          = "access-token-key"
 	REFRESH_TOKEN_KEY         = "refresh-token"
 	TOKEN_TYPE_KEY            = "token-type"
 	EXPIRY_KEY                = "expiry"
+	OAUTH_CODE_KEY            = "oauth-code"
 )
 
 // Opts persists all options set for the photos REST service
@@ -67,13 +68,14 @@ func WithOAuthConfig(c *oauth2.Config) OptFunc {
 
 func (a *authMiddleware) EnsureAuthorized(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		
+
 		// Check session store for cached session
 		session, err := a.store.Get(r, r.Header.Get(UNIQUE_SESSION_IDENTIFIER))
 		if err != nil {
-			fmt.Println("Missing session identifier in the request header")
+			a.logger.Printf("Missing session identifier in the request header: %s", err.Error())
 			w.WriteHeader(http.StatusFailedDependency)
-			w.Write([]byte("Failed to verify authorization"))
+			w.Write([]byte(fmt.Sprintf("Failed to verify authorization: %s", err.Error())))
+			return
 		}
 
 		accessToken := session.Values[ACCESS_TOKEN_KEY]
@@ -128,4 +130,55 @@ func (a *authMiddleware) EnsureAuthorized(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, rWithOAuth)
 	})
+}
+
+// RedirectCallback is the URL registered with Google API dashboard as the callback
+// Handler after a user has performed OAuth. It will save all tokens from the OAuth
+// Process within the session cookie and then used the cached ClientHandlerFunc,
+// responseWriter and request to continue the original call of the calling client.
+func (a *authMiddleware) GoogleRedirectCallback(rw http.ResponseWriter, r *http.Request) {
+
+	// Extract google code
+	code := r.FormValue("code")
+
+	if code == "" {
+		a.logger.Println("Code not found...")
+		rw.Write([]byte(fmt.Sprintf("Code not found to provide AccessToken: %s", r.FormValue("error_reason"))))
+		return
+	}
+	// Utilize the code to generate an Acess Token
+	ctx := context.Background()
+	token, err := a.Opts.authConfig.Exchange(ctx, code)
+	if err != nil {
+		a.logger.Fatal("Could not exchange code for token")
+		rw.Write([]byte("Token exchange error\n"))
+		rw.Write([]byte(err.Error()))
+		return
+	}
+
+	// Generate a new session cookie
+	session, err := a.store.Get(r, "session-key")
+	if err != nil {
+		a.logger.Fatal("Unable to generate new session")
+		rw.Write([]byte("Unable to generate new session\n"))
+		rw.Write([]byte(err.Error()))
+		return
+	}
+
+	// save tokens in session cookie
+	session.Values[ACCESS_TOKEN_KEY] = token.AccessToken
+	session.Values[TOKEN_TYPE_KEY] = token.TokenType
+	session.Values[REFRESH_TOKEN_KEY] = token.RefreshToken
+	session.Values[OAUTH_CODE_KEY] = code
+	session.Values[EXPIRY_KEY] = token.Expiry.Format(time.RFC3339Nano)
+
+	err = session.Save(r, rw)
+	if err != nil {
+		a.logger.Fatal("Unable to save session")
+		rw.Write([]byte("Unable to save session\n"))
+		rw.Write([]byte(err.Error()))
+		return
+	}
+
+	http.Redirect(rw, r, "/", http.StatusTemporaryRedirect)
 }
