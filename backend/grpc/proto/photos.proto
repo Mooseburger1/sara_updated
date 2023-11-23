@@ -30,6 +30,7 @@ message GooglePhotosAlbumsRequest {
 // Gets media from a specific album for a specific photo host {i.e. google photos, dropbox, s3}
 message GetMediaRequest {
     GooglePhotosMediaRequest google_request = 1;
+    OauthConfigInfo oauth_info = 2;
 }
 
 // Conforms to the REST API request to list all media associated with a particular Google

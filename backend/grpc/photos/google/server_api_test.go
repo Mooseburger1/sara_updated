@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sara_updated/backend/common"
 	"sara_updated/backend/grpc/proto/photos"
@@ -69,7 +69,7 @@ func TestListAlbums(t *testing.T) {
 				err: nil},
 			resp: &http.Response{
 				StatusCode: http.StatusOK,
-				Body: ioutil.NopCloser(strings.NewReader(`{
+				Body: io.NopCloser(strings.NewReader(`{
 					"albums": [
 					  {
 						"id": "foo",
@@ -118,7 +118,7 @@ func TestListAlbums(t *testing.T) {
 				err: nil},
 			resp: &http.Response{
 				StatusCode: http.StatusOK,
-				Body: ioutil.NopCloser(strings.NewReader(`{
+				Body: io.NopCloser(strings.NewReader(`{
 					"albums": [
 					  {
 						"id": "foo",
@@ -160,7 +160,7 @@ func TestListAlbums(t *testing.T) {
 			expected: albumsExpectation{value: DEFAULT_ALBUM_LIST_RESPONSE, err: nil},
 			resp: &http.Response{
 				StatusCode: http.StatusOK,
-				Body:       ioutil.NopCloser(strings.NewReader(`{}`)),
+				Body:       io.NopCloser(strings.NewReader(`{}`)),
 			},
 			checks: func(req *http.Request) {
 				if pageSize := req.URL.Query().Get("pageSize"); pageSize != "10" {
@@ -207,7 +207,7 @@ func TestListAlbums(t *testing.T) {
 			expected: albumsExpectation{value: nil, err: common.RpcErrorResponse(http.StatusBadRequest, "Unused").Err()},
 			resp: &http.Response{
 				StatusCode: http.StatusBadRequest,
-				Body:       ioutil.NopCloser(strings.NewReader("Unused")),
+				Body:       io.NopCloser(strings.NewReader("Unused")),
 			},
 			checks:      nil,
 			clientFunc:  createClientFunc,
@@ -217,7 +217,7 @@ func TestListAlbums(t *testing.T) {
 			expected: albumsExpectation{value: nil, err: nil},
 			resp: &http.Response{
 				StatusCode: http.StatusOK,
-				Body:       ioutil.NopCloser(strings.NewReader(`"albums":[],`)),
+				Body:       io.NopCloser(strings.NewReader(`"albums":[],`)),
 			},
 			checks:      nil,
 			clientFunc:  createClientFunc,
