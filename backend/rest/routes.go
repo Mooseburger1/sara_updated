@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"sara_updated/backend/common"
 	"sara_updated/backend/rest/service"
@@ -66,7 +68,7 @@ func (r *router) listAlbumsRouter(rpcHandler service.RpcAlbumsHandlerFunc) http.
 		pageToken := req.URL.Query().Get(service.PAGE_TOKEN)
 		pagesize := req.URL.Query().Get(service.PAGE_SIZE)
 
-		var qp *service.QueryParams
+		qp := &service.QueryParams{}
 		qp.PageToken = pageToken
 
 		if pagesize != "" {
@@ -78,7 +80,13 @@ func (r *router) listAlbumsRouter(rpcHandler service.RpcAlbumsHandlerFunc) http.
 		}
 
 		ctx := context.WithValue(req.Context(), service.ContextKey("queryParams"), qp)
-		rpcHandler(ctx)
-	}
+		albums, err := rpcHandler(ctx)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Failed to retrieve albums info: %s", err.Error())))
+		}
 
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(albums)
+	}
 }

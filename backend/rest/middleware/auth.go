@@ -70,7 +70,7 @@ func (a *authMiddleware) EnsureAuthorized(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// Check session store for cached session
-		session, err := a.store.Get(r, r.Header.Get(UNIQUE_SESSION_IDENTIFIER))
+		session, err := a.store.Get(r, "changethis")
 		if err != nil {
 			a.logger.Printf("Missing session identifier in the request header: %s", err.Error())
 			w.WriteHeader(http.StatusFailedDependency)
@@ -126,7 +126,7 @@ func (a *authMiddleware) EnsureAuthorized(next http.Handler) http.Handler {
 		//create a new request context containing the authenticated user
 		ctxWithOAuth := context.WithValue(r.Context(), service.OAUTH_CONFIG_KEY, &oauthConfig)
 		//create a new request using that new context
-		rWithOAuth := r.WithContext(ctxWithOAuth)
+		rWithOAuth := r.Clone(ctxWithOAuth)
 
 		next.ServeHTTP(w, rWithOAuth)
 	})
@@ -157,7 +157,7 @@ func (a *authMiddleware) GoogleRedirectCallback(rw http.ResponseWriter, r *http.
 	}
 
 	// Generate a new session cookie
-	session, err := a.store.Get(r, "session-key")
+	session, err := a.store.Get(r, "changethis")
 	if err != nil {
 		a.logger.Fatal("Unable to generate new session")
 		rw.Write([]byte("Unable to generate new session\n"))

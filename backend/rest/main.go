@@ -33,6 +33,7 @@ func authServiceOptFuncBuilder(as AuthMiddleWare) OptFunc {
 func main() {
 	logger := log.New(os.Stdout, "server-manager", log.LstdFlags)
 
+	// store, err := redistore.NewRediStore(10, "tcp", "192.168.224.2:6379", "", []byte("secret-key"))
 	store, err := redistore.NewRediStore(10, "tcp", "redis-server:6379", "", []byte("secret-key"))
 	if err != nil {
 		panic(err)
@@ -82,6 +83,7 @@ func main() {
 		}
 	}()
 
+	logger.Println("Listening on port 9090")
 	sigChan := make(chan os.Signal)
 	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, os.Kill)
