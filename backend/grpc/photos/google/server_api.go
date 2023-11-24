@@ -87,7 +87,9 @@ func (g *GPhotosAPI) GetAlbumMedia(ctx context.Context,
 		g.logger.Printf("%s", err)
 		panic(err)
 	}
-	err = protojson.Unmarshal(bytes, r)
+
+	unmarshaler := protojson.UnmarshalOptions{DiscardUnknown: true}
+	err = unmarshaler.Unmarshal(bytes, r)
 	if err != nil {
 		g.logger.Printf("%s", err)
 		panic(err)

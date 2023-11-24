@@ -15,14 +15,23 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var DEFAULT_ALBUM_LIST_REQUEST = &photos.AlbumListRequest{}
-var DEFAULT_ALBUM_LIST_RESPONSE = &photos.AlbumsInfo{GooglePhotosAlbums: &photos.GooglePhotosAlbums{}}
+var (
+	DEFAULT_ALBUM_LIST_REQUEST  = &photos.AlbumListRequest{}
+	DEFAULT_ALBUM_LIST_RESPONSE = &photos.AlbumsInfo{GooglePhotosAlbums: &photos.GooglePhotosAlbums{}}
+	DEFAULT_GET_MEDIA_REQUEST   = &photos.GetMediaRequest{}
+	DEFAULT_MEDIA_INFO          = &photos.MediaInfo{}
+)
 
 type reqChecksFunc func(req *http.Request)
 type testingClientFunc func(r *http.Response, c reqChecksFunc) common.ClientFunc
 
 type albumsExpectation struct {
 	value *photos.AlbumsInfo
+	err   error
+}
+
+type mediaExpectation struct {
+	value *photos.MediaInfo
 	err   error
 }
 
@@ -243,6 +252,110 @@ func TestListAlbums(t *testing.T) {
 			ctx := context.Background()
 			g = NewGPhotosApiStub(tt.clientFunc(tt.resp, tt.checks))
 			value, err := g.ListAlbums(ctx, tt.in)
+
+			if err != nil {
+				if !strings.Contains(tt.expected.err.Error(), err.Error()) {
+					t.Errorf("\nTest %s\nExpected error: %v\nActual error: %v", scenario, tt.expected.err.Error(), err.Error())
+				}
+			}
+
+			if !proto.Equal(value, tt.expected.value) {
+				t.Errorf("\nTest %s\nExpected: %q\nActual: %q\n", scenario, tt.expected.value, value)
+			}
+		})
+	}
+}
+
+func TestGetAlbumMedia(t *testing.T) {
+	tests := map[string]struct {
+		in          *photos.GetMediaRequest
+		expected    mediaExpectation
+		resp        *http.Response
+		checks      reqChecksFunc
+		clientFunc  testingClientFunc
+		shouldPanic bool
+	}{
+		"NoQueryParams": {
+			in: DEFAULT_GET_MEDIA_REQUEST,
+			expected: mediaExpectation{
+				value: &photos.MediaInfo{
+					GoogleMediaInfo: &photos.GooglePhotosMediaInfo{
+						MediaItems: []*photos.Media{
+							{
+								Id:          "hello",
+								ProductUrl:  "http://www.someurl.com",
+								MimeType:    "mp4",
+								Description: "",
+							},
+						},
+						NextPageToken: "page_token",
+					},
+				},
+				err: nil},
+			resp: &http.Response{
+				StatusCode: http.StatusOK,
+				Body: io.NopCloser(strings.NewReader(`{
+					"mediaItems": [
+					  {
+						"id": "hello",
+						"productUrl": "http://www.someurl.com",
+						"baseUrl": "https://lh3.googleusercontent.com/somealbum",
+						"mimeType": "mp4",
+						"mediaMetadata": {
+						  "creationTime": "2020-05-05T20:17:32Z",
+						  "width": "4032",
+						  "height": "3024",
+						  "photo": {
+							"cameraMake": "samsung",
+							"cameraModel": "SM-N975U",
+							"focalLength": 4.3,
+							"apertureFNumber": 2.4,
+							"isoEquivalent": 50,
+							"exposureTime": "0.000703729s"
+						  }
+						},
+						"filename": "20200505_161732.jpg"
+					  }
+					],
+					"nextPageToken": "page_token"
+				  }`)),
+			},
+			checks: func(req *http.Request) {
+				host := req.Host
+				path := req.URL.Path
+				url := fmt.Sprintf("https://%s%s", host, path)
+				if url != PHOTOS_ENDPOINT {
+					t.Errorf("Expected URL: %q\nActual: %q\n", PHOTOS_ENDPOINT, url)
+				}
+
+				if req.Method != http.MethodPost {
+					t.Errorf("Expected Verb: %q\nActual: %q\n", http.MethodPost, req.Method)
+				}
+			},
+			clientFunc:  createClientFunc,
+			shouldPanic: false,
+		},
+	}
+
+	for scenario, tt := range tests {
+		t.Run(scenario, func(t *testing.T) {
+			defer func() {
+				r := recover()
+
+				if (r == nil) && (tt.shouldPanic) {
+					t.Errorf("%s should have panicked but did not!", scenario)
+				}
+
+				if (r != nil) && (!tt.shouldPanic) {
+					t.Errorf("%s Test should not have panicked but did!", scenario)
+				}
+			}()
+
+			var g *GPhotosAPI
+
+			ctx := context.Background()
+			g = NewGPhotosApiStub(tt.clientFunc(tt.resp, tt.checks))
+			value, err := g.GetAlbumMedia(ctx, tt.in)
 
 			if err != nil {
 				if !strings.Contains(tt.expected.err.Error(), err.Error()) {
