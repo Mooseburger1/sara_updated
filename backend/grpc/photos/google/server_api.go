@@ -3,7 +3,7 @@ package photo_server
 import (
 	"bytes"
 	"context"
-	"fmt"
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -40,6 +40,12 @@ func NewGPhotosApiStub(cf common.ClientFunc) *GPhotosAPI {
 	}
 }
 
+type getMediaRequestBody struct {
+	AlbumId   string `json:"albumId"`
+	PageSize  int    `json:"pageSize"`
+	PageToken string `json:"pageToken"`
+}
+
 // GetAlbumMedia is a RPC service endpoint. It receives a
 // GetMediaRequest proto and returns a MediaInfo proto. Internally
 // it makes an Oauth2 authorized REST request to the Google Photos API
@@ -53,10 +59,18 @@ func (g *GPhotosAPI) GetAlbumMedia(ctx context.Context,
 		return nil, common.ClientCreationError()
 	}
 
-	requestBody := []byte(fmt.Sprintf(`{"albumId":"%v", "pageSize":"%v", "pageToken":"%v"}`,
-		rpc.GoogleRequest.GetAlbumId(), rpc.GoogleRequest.GetPageSize(), rpc.GoogleRequest.GetPageToken()))
+	requestBody := getMediaRequestBody{
+		AlbumId:   rpc.GoogleRequest.GetAlbumId(),
+		PageSize:  int(rpc.GoogleRequest.GetPageSize()),
+		PageToken: rpc.GoogleRequest.GetPageToken(),
+	}
 
-	req, err := http.NewRequest(http.MethodPost, PHOTOS_ENDPOINT, bytes.NewBuffer(requestBody))
+	jsonBody, err := json.Marshal(requestBody)
+	if err != nil {
+		panic(err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, PHOTOS_ENDPOINT, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		panic(err)
 	}
