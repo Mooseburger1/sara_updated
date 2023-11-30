@@ -79,6 +79,28 @@ func (p *photosClient) ListAlbums(ctx context.Context) (*protos.AlbumsInfo, erro
 	return p.pc.ListAlbums(ctx, req)
 }
 
+func (p *photosClient) GetAlbumMedia(ctx context.Context) (*protos.MediaInfo, error) {
+	oa, ok := ctx.Value(service.OAUTH_CONFIG_KEY).(*protoauth.OauthConfigInfo)
+	if !ok {
+		panic("could not extract OauthConfig")
+	}
+
+	mp, ok := extractMediaParams(ctx)
+	greq := &protos.GooglePhotosMediaRequest{}
+	if ok {
+		greq.AlbumId = mp.AlbumId
+		greq.PageSize = mp.Qp.PageSize
+		greq.PageToken = mp.Qp.PageToken
+	}
+
+	req := &protos.GetMediaRequest{
+		GoogleRequest: greq,
+		OauthInfo:     oa,
+	}
+
+	return p.pc.GetAlbumMedia(ctx, req)
+}
+
 func extractQueryParams(ctx context.Context) (*service.QueryParams, bool) {
 	v := ctx.Value(service.ContextKey("queryParams"))
 	if v == nil {
@@ -91,4 +113,18 @@ func extractQueryParams(ctx context.Context) (*service.QueryParams, bool) {
 	}
 
 	return qp, true
+}
+
+func extractMediaParams(ctx context.Context) (*service.GetAlbumMediaParams, bool) {
+	v := ctx.Value(service.ContextKey("mediaParams"))
+	if v == nil {
+		return nil, false
+	}
+
+	mp, ok := v.(*service.GetAlbumMediaParams)
+	if !ok {
+		panic("Recevied unexpected object in mediaParams context")
+	}
+
+	return mp, true
 }

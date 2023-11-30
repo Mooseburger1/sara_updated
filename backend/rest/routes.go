@@ -61,6 +61,9 @@ func (r *router) RegisterGetRoutes(get *mux.Router) {
 	// Register the auth Middleware
 	get.Use(r.Opts.Auth.EnsureAuthorized)
 	get.HandleFunc("/api/v1/ListAlbums", r.listAlbumsRouter(r.Opts.PhotoService.ListAlbums))
+
+	// (TODO) Register this as a POST request after testing
+	get.HandleFunc("/api/v1/GetAlbumMedia/{albumId:[-_0-9A-Za-z]+}", r.GetMediaRouter(r.Opts.PhotoService.GetAlbumMedia))
 }
 
 func (r *router) listAlbumsRouter(rpcHandler service.RpcAlbumsHandlerFunc) http.HandlerFunc {
@@ -88,5 +91,40 @@ func (r *router) listAlbumsRouter(rpcHandler service.RpcAlbumsHandlerFunc) http.
 
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(albums)
+	}
+}
+
+func (r *router) GetMediaRouter(rpcHandler service.RpcGetMediaHandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		albumId := vars["albumId"]
+		pageToken := req.URL.Query().Get(service.PAGE_TOKEN)
+		pagesize := req.URL.Query().Get(service.PAGE_SIZE)
+
+		qp := &service.QueryParams{}
+		qp.PageToken = pageToken
+
+		if pagesize != "" {
+			i, err := common.Str2Int32(pagesize)
+			if err != nil {
+				panic(err)
+			}
+			qp.PageSize = i
+		}
+
+		mp := service.GetAlbumMediaParams{
+			Qp: qp,
+			AlbumId: albumId,
+		}
+
+		ctx := context.WithValue(req.Context(), service.GetMediaKey("mediaParams"), mp)
+		media, err := rpcHandler(ctx)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Failed to retrieve albums info: %s", err.Error())))
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(media)
 	}
 }
