@@ -87,6 +87,7 @@ func (p *photosClient) GetAlbumMedia(ctx context.Context) (*protos.MediaInfo, er
 
 	mp, ok := extractMediaParams(ctx)
 	greq := &protos.GooglePhotosMediaRequest{}
+
 	if ok {
 		greq.AlbumId = mp.AlbumId
 		greq.PageSize = mp.Qp.PageSize
@@ -116,7 +117,7 @@ func extractQueryParams(ctx context.Context) (*service.QueryParams, bool) {
 }
 
 func extractMediaParams(ctx context.Context) (*service.GetAlbumMediaParams, bool) {
-	v := ctx.Value(service.ContextKey("mediaParams"))
+	v := ctx.Value(service.GetMediaKey("mediaParams"))
 	if v == nil {
 		return nil, false
 	}

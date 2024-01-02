@@ -89,7 +89,6 @@ func (r *router) listAlbumsRouter(rpcHandler service.RpcAlbumsHandlerFunc) http.
 			w.Write([]byte(fmt.Sprintf("Failed to retrieve albums info: %s", err.Error())))
 		}
 
-		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(albums)
 	}
 }
@@ -112,8 +111,8 @@ func (r *router) GetMediaRouter(rpcHandler service.RpcGetMediaHandlerFunc) http.
 			qp.PageSize = i
 		}
 
-		mp := service.GetAlbumMediaParams{
-			Qp: qp,
+		mp := &service.GetAlbumMediaParams{
+			Qp:      qp,
 			AlbumId: albumId,
 		}
 
@@ -124,7 +123,6 @@ func (r *router) GetMediaRouter(rpcHandler service.RpcGetMediaHandlerFunc) http.
 			w.Write([]byte(fmt.Sprintf("Failed to retrieve albums info: %s", err.Error())))
 		}
 
-		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(media)
 	}
 }

@@ -71,8 +71,8 @@ func main() {
 		Addr:         ":9090",
 		Handler:      ch(serveMux),
 		IdleTimeout:  120 * time.Second,
-		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 1 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
 	}
 
 	//listen and server async
